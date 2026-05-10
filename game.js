@@ -76,28 +76,63 @@ function getStarMult() { return 1 + rebirthCount * 0.3; }
 function createCard(r) {
     let templates = customCardTemplates[r] || [];
     let useTemplate = false, template = null;
-    if (templates.length > 0 && Math.random() < (r === "Босс" ? 0.3 : 0.7)) {
+
+    // Для высоких редкостей ВСЕГДА используем шаблон, если он подходит по minRebirth
+    let alwaysUseTemplate = ["Легендарная","Секретная","Эволюционная","Босс"].includes(r);
+    
+    if (templates.length > 0) {
         let validTemplates = templates.filter(t => (t.minRebirth || 0) <= rebirthCount);
-        if (validTemplates.length > 0) { template = validTemplates[Math.floor(Math.random() * validTemplates.length)]; useTemplate = true; }
+        if (validTemplates.length > 0) {
+            if (alwaysUseTemplate) {
+                // Всегда берём шаблон для высоких редкостей
+                template = validTemplates[Math.floor(Math.random() * validTemplates.length)];
+                useTemplate = true;
+            } else if (Math.random() < (r === "Босс" ? 0.3 : 0.7)) {
+                // Для обычных-мифических — с шансом
+                template = validTemplates[Math.floor(Math.random() * validTemplates.length)];
+                useTemplate = true;
+            }
+        }
     }
+
     let s = cardStats[r] || { damage: 5, hp: 10, sellPrice: 10 };
     let n, d, hp, sp, a, u, uns;
+
     if (useTemplate) {
-        n = template.name; d = template.damage ?? s.damage; hp = template.hp ?? s.hp; sp = template.sellPrice ?? s.sellPrice; a = template.ability || null; u = template.universe || "?"; uns = template.unsellable || false;
-        if (!discoveredCards.includes(n)) { discoveredCards.push(n); saveAll(); sfxCardObtain(); }
+        n = template.name;
+        d = template.damage ?? s.damage;
+        hp = template.hp ?? s.hp;
+        sp = template.sellPrice ?? s.sellPrice;
+        a = template.ability || null;
+        u = template.universe || "?";
+        uns = template.unsellable || false;
+        if (!discoveredCards.includes(n)) {
+            discoveredCards.push(n);
+            saveAll();
+            sfxCardObtain();
+        }
     } else {
-        if (r === "Босс") { n = "Босс-призрак"; d = s.damage; hp = s.hp; sp = s.sellPrice; a = null; u = "Боссы"; uns = false; }
-        else { let rn = ["Герой","Воин","Странник","Маг","Рыцарь"][Math.floor(Math.random()*5)]; n = rn; d = s.damage; hp = s.hp; sp = s.sellPrice; a = null; u = "Фэнтези"; uns = false; }
+        if (r === "Босс") {
+            n = "Босс-призрак";
+            d = s.damage; hp = s.hp; sp = s.sellPrice;
+            a = null; u = "Боссы"; uns = false;
+        } else {
+            let rn = ["Герой","Воин","Странник","Маг","Рыцарь"][Math.floor(Math.random()*5)];
+            n = rn; d = s.damage; hp = s.hp; sp = s.sellPrice;
+            a = null; u = "Фэнтези"; uns = false;
+        }
     }
-    return { id: Date.now() + Math.random() * 10000, name: n, rarity: r, damage: d, hp: hp, sellPrice: sp, ability: a, universe: u, unsellable: uns, minRebirth: template ? (template.minRebirth || 0) : 0, statusAbility: template ? (template.statusAbility || null) : null, extraStatus: template ? (template.extraStatus || null) : null };
+
+    return {
+        id: Date.now() + Math.random() * 10000,
+        name: n, rarity: r, damage: d, hp: hp,
+        sellPrice: sp, ability: a, universe: u,
+        unsellable: uns,
+        minRebirth: template ? (template.minRebirth || 0) : 0,
+        statusAbility: template ? (template.statusAbility || null) : null,
+        extraStatus: template ? (template.extraStatus || null) : null
+    };
 }
-function getRandomRarity() { let t = 0; for (let k in cardWeights) t += cardWeights[k]; let r = Math.random() * t, ac = 0; for (let k in cardWeights) { ac += cardWeights[k]; if (r <= ac) return k; } return "Обычная"; }
-function getBossRewardRarity(w) { let m = Math.min(3, 1 + Math.floor(w / 10) / 10), wg = { ...cardWeights }; for (let r in wg) { wg[r] *= (1 + rarities.indexOf(r) * m * 0.3); } let t = 0; for (let k in wg) t += wg[k]; let r = Math.random() * t, ac = 0; for (let k in wg) { ac += wg[k]; if (r <= ac) return k; } return "Обычная"; }
-function getExpNeeded(l) { return 150 * l; }
-function addExp(a) { playerExp += a; let lu = false; while (playerExp >= getExpNeeded(playerLevel)) { playerExp -= getExpNeeded(playerLevel); playerLevel++; lu = true; points += Math.floor(50 * playerLevel * getStarMult()); if (playerLevel >= 20 && !achievements.level20) { achievements.level20 = true; points += Math.floor(500 * getStarMult()); } if (playerLevel >= 50 && !achievements.level50) { achievements.level50 = true; points += Math.floor(2000 * getStarMult()); } } if (lu) { renderUpgrades(); sfxLevelUp(); showFloatingText("🎉 УРОВЕНЬ " + playerLevel + "!", "#f5af19"); } updateLevelDisplay(); saveAll(); }
-function updateLevelDisplay() { document.getElementById("playerLevel").innerText = playerLevel; document.getElementById("playerExp").innerText = Math.floor(playerExp); let n = getExpNeeded(playerLevel); document.getElementById("expToNext").innerText = n; document.getElementById("expBar").style.width = (playerExp / n) * 100 + "%"; }
-function isUpgradeUnlocked(k) { return playerLevel >= upgrades[k].reqLevel; }
-function getRestCost() { return Math.min(200, Math.floor(30 + fatigue * 2.5)); }
 
 // Усталость с учётом скорости кликов
 function increaseFatigue(clickSpeedMultiplier = 1) {
