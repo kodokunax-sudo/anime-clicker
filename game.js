@@ -87,7 +87,7 @@ function createCard(r) {
                 // Всегда берём шаблон для высоких редкостей
                 template = validTemplates[Math.floor(Math.random() * validTemplates.length)];
                 useTemplate = true;
-            } else if (Math.random() < (r === "Босс" ? 0.3 : 0.7)) {
+            } else if (Math.random() < (r === "Босс" ? 0.0 : 1)) {
                 // Для обычных-мифических — с шансом
                 template = validTemplates[Math.floor(Math.random() * validTemplates.length)];
                 useTemplate = true;
