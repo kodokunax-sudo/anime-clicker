@@ -133,7 +133,13 @@ function createCard(r) {
         extraStatus: template ? (template.extraStatus || null) : null
     };
 }
-
+function getRandomRarity() { let t = 0; for (let k in cardWeights) t += cardWeights[k]; let r = Math.random() * t, ac = 0; for (let k in cardWeights) { ac += cardWeights[k]; if (r <= ac) return k; } return "Обычная"; }
+function getBossRewardRarity(w) { let m = Math.min(3, 1 + Math.floor(w / 10) / 10), wg = { ...cardWeights }; for (let r in wg) { wg[r] *= (1 + rarities.indexOf(r) * m * 0.3); } let t = 0; for (let k in wg) t += wg[k]; let r = Math.random() * t, ac = 0; for (let k in wg) { ac += wg[k]; if (r <= ac) return k; } return "Обычная"; }
+function getExpNeeded(l) { return 150 * l; }
+function addExp(a) { playerExp += a; let lu = false; while (playerExp >= getExpNeeded(playerLevel)) { playerExp -= getExpNeeded(playerLevel); playerLevel++; lu = true; points += Math.floor(50 * playerLevel * getStarMult()); if (playerLevel >= 20 && !achievements.level20) { achievements.level20 = true; points += Math.floor(500 * getStarMult()); } if (playerLevel >= 50 && !achievements.level50) { achievements.level50 = true; points += Math.floor(2000 * getStarMult()); } } if (lu) { renderUpgrades(); sfxLevelUp(); showFloatingText("🎉 УРОВЕНЬ " + playerLevel + "!", "#f5af19"); } updateLevelDisplay(); saveAll(); }
+function updateLevelDisplay() { document.getElementById("playerLevel").innerText = playerLevel; document.getElementById("playerExp").innerText = Math.floor(playerExp); let n = getExpNeeded(playerLevel); document.getElementById("expToNext").innerText = n; document.getElementById("expBar").style.width = (playerExp / n) * 100 + "%"; }
+function isUpgradeUnlocked(k) { return playerLevel >= upgrades[k].reqLevel; }
+function getRestCost() { return Math.min(200, Math.floor(30 + fatigue * 2.5)); }
 // Усталость с учётом скорости кликов
 function increaseFatigue(clickSpeedMultiplier = 1) {
     let resist = upgrades.fatigueResist.level * upgrades.fatigueResist.increment;
