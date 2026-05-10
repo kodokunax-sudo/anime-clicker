@@ -7,6 +7,69 @@ let enemyStatuses = { fireTicks:0, fireDamage:0, poisonDamage:0, bleedMult:1.0, 
 let hasFireArtifact = false, hasCompoundV = {}, skipUsed = false, dekusNerfWaves = 0, currentDialog = null;
 let challenges = [], lastChallengeReset = null;
 
+// Комбо-система
+let comboCount = 0, lastClickTime = 0, comboMultiplier = 1;
+
+// Музыка
+let worldMusicOscillators = [], musicGainNode = null, musicEnabled = true;
+
+// ========== МУЗЫКАЛЬНЫЕ ТЕМЫ МИРОВ ==========
+const worldMusicNotes = {
+    "Лес начала и конца": [262, 294, 330, 349, 392, 349, 330, 294],
+    "Огненная пустошь": [392, 440, 494, 523, 494, 440, 392, 349],
+    "Гранд Лайн": [523, 587, 659, 698, 784, 698, 659, 587],
+    "Замороженные земли": [349, 330, 294, 262, 294, 330, 349, 294],
+    "Тёмное измерение": [440, 494, 523, 587, 659, 587, 523, 494],
+    "Небесный дворец": [587, 659, 784, 880, 784, 659, 587, 523],
+    "Бездна отчаяния": [196, 220, 247, 262, 247, 220, 196, 165],
+    "Предел силы": [330, 392, 440, 523, 440, 392, 330, 262],
+    "Космическая пустота": [247, 262, 294, 330, 294, 262, 247, 220],
+    "Финальный рубеж": [523, 440, 392, 330, 392, 440, 523, 659],
+    "Возвращение Охотника": [440, 494, 523, 587, 659, 587, 523, 494]
+};
+
+// ========== МУЗЫКА ==========
+function stopWorldMusic() {
+    worldMusicOscillators.forEach(o => { try { o.stop(); } catch(e) {} });
+    worldMusicOscillators = [];
+}
+function startWorldMusic(worldName) {
+    stopWorldMusic();
+    if (!musicEnabled) return;
+    if (!audioCtx) initAudio();
+    let notes = worldMusicNotes[worldName] || worldMusicNotes["Лес начала и конца"];
+    if (!musicGainNode) {
+        musicGainNode = audioCtx.createGain();
+        musicGainNode.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        musicGainNode.connect(audioCtx.destination);
+    }
+    let noteIndex = 0;
+    function playNextNote() {
+        if (!musicEnabled) return;
+        let freq = notes[noteIndex % notes.length];
+        let osc = audioCtx.createOscillator();
+        let noteGain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        noteGain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        osc.connect(noteGain);
+        noteGain.connect(musicGainNode);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.4);
+        worldMusicOscillators.push(osc);
+        noteIndex++;
+        setTimeout(playNextNote, 500);
+    }
+    playNextNote();
+}
+function toggleMusic() {
+    musicEnabled = !musicEnabled;
+    if (musicEnabled) { startWorldMusic(getCurrentWorld().name); }
+    else { stopWorldMusic(); }
+    document.getElementById("musicToggleBtn").innerText = musicEnabled ? "🔊" : "🔇";
+}
+
 // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 function getRebirthMult() { return 1 + rebirthCount * 0.3; }
 function getStarMult() { return 1 + rebirthCount * 0.3; }
@@ -31,12 +94,21 @@ function createCard(r) {
 function getRandomRarity() { let t = 0; for (let k in cardWeights) t += cardWeights[k]; let r = Math.random() * t, ac = 0; for (let k in cardWeights) { ac += cardWeights[k]; if (r <= ac) return k; } return "Обычная"; }
 function getBossRewardRarity(w) { let m = Math.min(3, 1 + Math.floor(w / 10) / 10), wg = { ...cardWeights }; for (let r in wg) { wg[r] *= (1 + rarities.indexOf(r) * m * 0.3); } let t = 0; for (let k in wg) t += wg[k]; let r = Math.random() * t, ac = 0; for (let k in wg) { ac += wg[k]; if (r <= ac) return k; } return "Обычная"; }
 function getExpNeeded(l) { return 150 * l; }
-function recalcExp() { while (playerExp >= getExpNeeded(playerLevel)) { playerExp -= getExpNeeded(playerLevel); playerLevel++; } }
 function addExp(a) { playerExp += a; let lu = false; while (playerExp >= getExpNeeded(playerLevel)) { playerExp -= getExpNeeded(playerLevel); playerLevel++; lu = true; points += Math.floor(50 * playerLevel * getStarMult()); if (playerLevel >= 20 && !achievements.level20) { achievements.level20 = true; points += Math.floor(500 * getStarMult()); } if (playerLevel >= 50 && !achievements.level50) { achievements.level50 = true; points += Math.floor(2000 * getStarMult()); } } if (lu) { renderUpgrades(); sfxLevelUp(); showFloatingText("🎉 УРОВЕНЬ " + playerLevel + "!", "#f5af19"); } updateLevelDisplay(); saveAll(); }
 function updateLevelDisplay() { document.getElementById("playerLevel").innerText = playerLevel; document.getElementById("playerExp").innerText = Math.floor(playerExp); let n = getExpNeeded(playerLevel); document.getElementById("expToNext").innerText = n; document.getElementById("expBar").style.width = (playerExp / n) * 100 + "%"; }
 function isUpgradeUnlocked(k) { return playerLevel >= upgrades[k].reqLevel; }
 function getRestCost() { return Math.min(200, Math.floor(30 + fatigue * 2.5)); }
-function increaseFatigue() { let resist = upgrades.fatigueResist.level * upgrades.fatigueResist.increment; if (hasSukunaFingers) resist *= 4; team.forEach(idx => { let cd = myCards[idx]; if (cd?.ability?.type === 'fatigueResist') resist += cd.ability.value; if (cd?.ability?.type === 'bossDouble' && currentEnemy?.isBoss) resist = 100; }); let baseIncrease = 2; let increase = Math.max(0.1, baseIncrease - resist); fatigue = Math.min(100, fatigue + increase); updateFatigue(); updateRestBtn(); checkAutoRest(); }
+
+// Усталость с учётом скорости кликов
+function increaseFatigue(clickSpeedMultiplier = 1) {
+    let resist = upgrades.fatigueResist.level * upgrades.fatigueResist.increment;
+    if (hasSukunaFingers) resist *= 4;
+    team.forEach(idx => { let cd = myCards[idx]; if (cd?.ability?.type === 'fatigueResist') resist += cd.ability.value; if (cd?.ability?.type === 'bossDouble' && currentEnemy?.isBoss) resist = 100; });
+    let baseIncrease = 2 * clickSpeedMultiplier;
+    let increase = Math.max(0.1, baseIncrease - resist);
+    fatigue = Math.min(100, fatigue + increase);
+    updateFatigue(); updateRestBtn(); checkAutoRest();
+}
 function rest() { let c = getRestCost(); if (points < c) return; points -= c; fatigue = Math.max(0, fatigue - 40); updateFatigue(); updateRestBtn(); renderPoints(); }
 function updateFatigue() { document.getElementById("fatiguePercent").innerText = fatigue.toFixed(1); document.getElementById("fatigueBar").style.width = fatigue + "%"; }
 function updateRestBtn() { document.getElementById("restCost").innerText = getRestCost(); }
@@ -65,6 +137,7 @@ function generateEnemy() {
     document.getElementById("spareBtn").style.display = "none";
     document.getElementById("dialogBox").style.display = "none";
     currentDialog = null;
+    let world = getCurrentWorld();
     let isBoss = wave % 10 === 0, isUnique = bossTemplates[wave];
     let hp, dmg, name, dialogue = "", enemyStat = null;
     if (isUnique) {
@@ -98,6 +171,7 @@ function generateEnemy() {
     }
     applyStatusEffects();
     currentEnemy = { name, hp, maxHp: hp, damage: dmg, isBoss: isBoss || isUnique };
+    startWorldMusic(world.name);
     renderEnemy();
     updateStatusDisplay();
     updateEnemyStatusDisplay();
@@ -155,12 +229,30 @@ function checkEvolutionQuests() {
     renderEvoTab();
 }
 
-// ========== БОЙ ==========
+// ========== БОЙ С КОМБО-СИСТЕМОЙ ==========
 function handleClick() {
     initAudio();
     if (playerHp <= 0) { resetGame(); return; }
     if (currentEnemy.hp <= 0) return;
     if (deathNoteTarget && wave === deathNoteTarget && !skipUsed) { currentEnemy.hp = 0; skipUsed = true; deathNoteTarget = null; victory(); return; }
+
+    // Комбо-логика
+    let now = Date.now();
+    let clickInterval = lastClickTime ? (now - lastClickTime) / 1000 : 999;
+    lastClickTime = now;
+    let fatigueMultiplier = 1;
+    if (clickInterval < 0.1) { fatigueMultiplier = 3; }
+    else if (clickInterval < 0.5) { comboCount++; }
+    else { comboCount = 0; comboMultiplier = 1; }
+
+    if (comboCount >= 50) comboMultiplier = 5;
+    else if (comboCount >= 25) comboMultiplier = 3;
+    else if (comboCount >= 10) comboMultiplier = 2;
+
+    if (comboCount === 10) showFloatingText("⚡ КОМБО x2!", "#ffaa00");
+    if (comboCount === 25) showFloatingText("⚡ КОМБО x3!", "#ff8800");
+    if (comboCount === 50) showFloatingText("⚡ КОМБО x5!", "#ff4400");
+
     if (firstAttackThisFight) {
         firstAttackThisFight = false;
         for (let idx of team) {
@@ -176,30 +268,40 @@ function handleClick() {
                 }
             }
         }
-        if (enemyStatuses.poisonDamage > 0) { currentEnemy.hp -= enemyStatuses.poisonDamage; showFloatingText("🌀 -" + enemyStatuses.poisonDamage, "#2ecc71"); if (currentEnemy.hp <= 0) { victory(); return; } }
+        if (enemyStatuses.poisonDamage > 0) { currentEnemy.hp -= enemyStatuses.poisonDamage; if (currentEnemy.hp <= 0) { victory(); return; } }
     }
+
     let dmg = window.playerFinalDamage || 1;
     let m = getPassiveModifiers();
     if (currentEnemy.isBoss) dmg = Math.floor(dmg * (1 + m.bossBonus));
     let cc = upgrades.crit.level * upgrades.crit.increment;
     team.forEach(idx => { let cd = myCards[idx]; if (cd?.ability?.type === 'critChance') cc += cd.ability.value * (1 + abilityUpgradeLevel * 0.1); if (cd?.ability?.type === 'damageMultChance' && Math.random() < cd.ability.chance) dmg = Math.floor(dmg * cd.ability.mult); });
+
+    // Применяем комбо-множитель
+    dmg = Math.floor(dmg * comboMultiplier);
+
     if (Math.random() < cc) { dmg = Math.floor(dmg * 2); sfxCrit(); showFloatingText("💥 КРИТ! x2", "#feca57"); } else { sfxClick(); showFloatingText("-" + dmg, "#fff"); }
     dmg = Math.floor(dmg * enemyStatuses.bleedMult);
     checkEvolutionQuests();
-    if (enemyStatuses.fireTicks > 0) { let fdmg = enemyStatuses.fireDamage || 5; currentEnemy.hp -= fdmg; enemyStatuses.fireTicks--; showFloatingText("🔥 -" + fdmg, "#ff6b6b"); }
+    if (enemyStatuses.fireTicks > 0) { let fdmg = enemyStatuses.fireDamage || 5; currentEnemy.hp -= fdmg; enemyStatuses.fireTicks--; }
     currentEnemy.hp -= dmg;
     if (currentEnemy.hp <= 0) { victory(); return; }
+
     clicksSinceLastCounter++;
     let maxClicks = Math.max(1, 3 - enemyStatuses.freezeStacks + enemyStatuses.blindStacks);
     if (clicksSinceLastCounter >= maxClicks) {
         playerHp -= Math.floor(currentEnemy.damage * m.takenMult);
         clicksSinceLastCounter = 0;
         if (playerHp <= 0) { defeat(); return; }
-        else { showFloatingText("-" + Math.floor(currentEnemy.damage * m.takenMult) + " HP", "#e74c3c"); }
     }
     if (Math.random() < enemyStatuses.shockChance && clicksSinceLastCounter === maxClicks - 1) { clicksSinceLastCounter = 0; }
+
+    // Увеличиваем усталость с учётом скорости клика
+    increaseFatigue(fatigueMultiplier);
+
     renderEnemy(); document.getElementById("playerHp").innerText = Math.floor(playerHp); document.getElementById("clicksToCounter").innerText = maxClicks - clicksSinceLastCounter; updateStatusDisplay(); saveAll();
 }
+
 function victory() {
     let isBoss = wave % 10 === 0;
     let rew = isBoss ? Math.floor(wave / 2 * getStarMult()) : Math.floor(wave / 3 * getStarMult());
@@ -291,6 +393,10 @@ function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<
 document.addEventListener("DOMContentLoaded", function () {
     loadData(); renderAll(); updateLevelDisplay(); updateFatigue(); updateRestBtn(); updateClaimTimer();
     document.getElementById("afkWave").innerText = wave;
+
+    // Кнопка музыки
+    document.getElementById("worldIndicator").innerHTML += ' <button id="musicToggleBtn" class="btn" style="padding:2px 8px;font-size:12px;margin-left:8px;" onclick="toggleMusic()">🔊</button>';
+
     setInterval(function () { renderShop(); renderActiveBuffs(); updatePlayerStats(); renderFreeSpins(); checkFreeSpinReset(); updateClaimTimer(); if (Date.now() - (lastChallengeReset || 0) >= 86400000) genChallenges(); saveAll(); }, 1000);
     document.getElementById("clickArea").addEventListener("click", handleClick);
     document.getElementById("clearTeamBtn").addEventListener("click", function () { team = []; renderAll(); updatePlayerStats(); });
