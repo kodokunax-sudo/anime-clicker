@@ -105,12 +105,14 @@
         .dialog-box { background: rgba(0,0,0,0.7); border-radius: 16px; padding: 15px; margin: 10px 0; border-left: 4px solid #f5af19; font-weight: 600; }
         .dialog-option { background: rgba(44,44,58,0.8); border-radius: 12px; padding: 12px; margin: 5px 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.15); transition: all 0.2s; font-weight: 700; }
         .dialog-option:hover { background: rgba(245,175,25,0.25); border-color: #f5af19; }
+        .card-image { width: 70px; height: 70px; border-radius: 10px; margin-bottom: 4px; object-fit: cover; }
+        .card-placeholder { width: 70px; height: 70px; border-radius: 10px; margin-bottom: 4px; background: #2c2c3a; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #aaa; }
     </style>
 </head>
 <body>
 <div class="app" id="appContainer">
     <div class="mode-switch"><span class="mode-label">🎮 Режим</span><div class="toggle" id="modeToggle"><span class="active" data-mode="normal">Обычный</span><span data-mode="moder">Модер</span></div></div>
-    <div class="world-indicator" id="worldIndicator">🌍 Мир: Лес начала и конца</div>
+    <div class="world-indicator" id="worldIndicator">🌍 Мир: Лес начала и конца <button id="musicToggleBtn" class="btn" style="padding:2px 8px;font-size:12px;margin-left:8px;" onclick="toggleMusic()">🔇</button></div>
     <div class="tabs">
         <button class="tab-btn active" data-tab="collection">🏠 Коллекция</button>
         <button class="tab-btn" data-tab="battle">⚔️ Битва</button>
@@ -222,8 +224,9 @@
     <div class="modal-content" id="modalContent" onclick="event.stopPropagation()"></div>
 </div>
 
-</body>
+<script src="images.js"></script>
 <script src="data.js"></script>
 <script src="game.js"></script>
 <script src="ui.js"></script>
+</body>
 </html>
