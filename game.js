@@ -7,22 +7,7 @@ let enemyStatuses = { fireTicks:0, fireDamage:0, poisonDamage:0, bleedMult:1.0, 
 let hasFireArtifact = false, hasCompoundV = {}, skipUsed = false, dekusNerfWaves = 0, currentDialog = null;
 let challenges = [], lastChallengeReset = null;
 let comboCount = 0, lastClickTime = 0, comboMultiplier = 1;
-let musicEnabled = true;
-
-// ========== МУЗЫКАЛЬНЫЕ ТЕМЫ ==========
-const worldMusicNotes = {
-    "Лес начала и конца": [262, 294, 330, 349, 392, 349, 330, 294],
-    "Огненная пустошь": [392, 440, 494, 523, 494, 440, 392, 349],
-    "Гранд Лайн": [523, 587, 659, 698, 784, 698, 659, 587],
-    "Замороженные земли": [349, 330, 294, 262, 294, 330, 349, 294],
-    "Тёмное измерение": [440, 494, 523, 587, 659, 587, 523, 494],
-    "Небесный дворец": [587, 659, 784, 880, 784, 659, 587, 523],
-    "Бездна отчаяния": [196, 220, 247, 262, 247, 220, 196, 165],
-    "Предел силы": [330, 392, 440, 523, 440, 392, 330, 262],
-    "Космическая пустота": [247, 262, 294, 330, 294, 262, 247, 220],
-    "Финальный рубеж": [523, 440, 392, 330, 392, 440, 523, 659],
-    "Возвращение Охотника": [440, 494, 523, 587, 659, 587, 523, 494]
-};
+let musicEnabled = false;
 
 // ========== МУЗЫКА ==========
 function stopWorldMusic() { if (window._musicInterval) { clearInterval(window._musicInterval); window._musicInterval = null; } }
@@ -39,7 +24,7 @@ function startWorldMusic(worldName) {
         let gain = audioCtx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(notes[noteIndex % notes.length], audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
         osc.connect(gain); gain.connect(audioCtx.destination);
         osc.start(); osc.stop(audioCtx.currentTime + 0.4);
@@ -64,26 +49,22 @@ function createCard(r) {
     let templates = customCardTemplates[r] || [];
     let template = null;
 
-    // Всегда используем шаблон, если он подходит по minRebirth
     if (templates.length > 0) {
         let validTemplates = templates.filter(t => (t.minRebirth || 0) <= rebirthCount);
         if (validTemplates.length > 0) {
             template = validTemplates[Math.floor(Math.random() * validTemplates.length)];
-        } else if (templates.length > 0) {
-            // Если ни один шаблон не подходит по minRebirth, берём первый попавшийся
-            template = templates[0];
+        } else {
+            template = templates[Math.floor(Math.random() * templates.length)];
         }
     }
 
-    // Если шаблон всё ещё не найден (такого почти не бывает), создаём с базовыми статами
     if (!template) {
         let s = cardStats[r] || { damage: 5, hp: 10, sellPrice: 10 };
         return {
             id: Date.now() + Math.random() * 10000,
-            name: r, rarity: r, damage: s.damage, hp: s.hp,
+            name: "???", rarity: r, damage: s.damage, hp: s.hp,
             sellPrice: s.sellPrice, ability: null, universe: "?",
-            unsellable: false, minRebirth: 0,
-            statusAbility: null, extraStatus: null
+            unsellable: false, minRebirth: 0, statusAbility: null, extraStatus: null
         };
     }
 
@@ -96,20 +77,15 @@ function createCard(r) {
     let u = template.universe || "?";
     let uns = template.unsellable || false;
 
-    if (!discoveredCards.includes(n)) {
-        discoveredCards.push(n);
-        saveAll();
-        sfxCardObtain();
-    }
+    if (!discoveredCards.includes(n)) { discoveredCards.push(n); saveAll(); sfxCardObtain(); }
 
     return {
         id: Date.now() + Math.random() * 10000,
         name: n, rarity: r, damage: d, hp: hp,
-        sellPrice: sp, ability: a, universe: u,
-        unsellable: uns,
-        minRebirth: template ? (template.minRebirth || 0) : 0,
-        statusAbility: template ? (template.statusAbility || null) : null,
-        extraStatus: template ? (template.extraStatus || null) : null
+        sellPrice: sp, ability: a, universe: u, unsellable: uns,
+        minRebirth: template.minRebirth || 0,
+        statusAbility: template.statusAbility || null,
+        extraStatus: template.extraStatus || null
     };
 }
 
@@ -323,7 +299,7 @@ function runAfkTick() { if (!afkActive) return; let dmg = (5 + upgrades.damage.l
 // ========== ЧЕКПОИНТЫ ==========
 function toggleCheckpoint(cp) { if (activeCheckpoint === cp) { activeCheckpoint = 0; } else { activeCheckpoint = cp; } saveAll(); renderCheckpoints(); }
 
-// ========== МАГАЗИН ==========
+// ========== МАГАЗИН / АВТОПРОДАЖА / УЛУЧШЕНИЯ ==========
 function genShopItem() { let r = Math.random(); if (r < 0.3) { return { ...specialPotions[Math.floor(Math.random() * specialPotions.length)], type: "buff", id: Date.now() + "_" + Math.random() }; } let poolKeys = Object.keys(shopItemsPool); let key = poolKeys[Math.floor(Math.random() * poolKeys.length)]; let items = shopItemsPool[key]; return { ...items[Math.floor(Math.random() * items.length)], id: Date.now() + "_" + Math.random() }; }
 function refreshShop() { for (let i = 0; i < 3; i++) shopItems[i] = genShopItem(); shopRefreshTime = Date.now(); saveAll(); renderShop(); }
 function refreshShopNow() { if (points < 1000) return; points -= 1000; refreshShop(); renderPoints(); }
@@ -334,8 +310,6 @@ function applyCompoundV(name) { if (points < 5000) return; if (hasCompoundV[name
 window.buySukuna = function () { if (rebirthCount < 4 || points < 15000) return; points -= 15000; hasSukunaFingers = true; saveAll(); renderShop(); renderPoints(); updatePlayerStats(); };
 window.buyDeathNote = function () { if (rebirthCount < 4 || points < 500000) return; let v = parseInt(document.getElementById("dnInput").value); if (!v || v < 1) return; points -= 500000; deathNoteTarget = v; skipUsed = false; saveAll(); renderShop(); renderPoints(); };
 function useFireArtifact() { if (!hasFireArtifact) return; if (points < 100000) { alert("Не хватает звёзд!"); return; } points -= 100000; hasFireArtifact = false; enemyStatuses.fireTicks = 5; updateStatusDisplay(); let interval = setInterval(() => { if (currentEnemy && currentEnemy.hp > 0 && enemyStatuses.fireTicks > 0) { currentEnemy.hp -= Math.floor(currentEnemy.maxHp / 5); enemyStatuses.fireTicks--; renderEnemy(); updateStatusDisplay(); if (currentEnemy.hp <= 0 || enemyStatuses.fireTicks <= 0) { clearInterval(interval); if (currentEnemy.hp <= 0) victory(); else enemyStatuses.fireTicks = 0; } } else { clearInterval(interval); } }, 2000); saveAll(); }
-
-// ========== АВТОПРОДАЖА / АВТООТДЫХ / УЛУЧШЕНИЯ / КОДЫ / ЗАДАНИЯ ==========
 function getAutoSellCost(rarity) { let idx = rarities.indexOf(rarity); return 100 * Math.pow(2, idx); }
 function purchaseAutoSell(rarity) { if (rebirthCount < 1) return; let cost = getAutoSellCost(rarity); if (points < cost) return; points -= cost; purchasedAutoSell[rarity] = true; autoSellSettings[rarity] = true; saveAll(); renderBulkSell(); renderPoints(); }
 function toggleAutoSell(rarity) { if (!purchasedAutoSell[rarity]) return; autoSellSettings[rarity] = !autoSellSettings[rarity]; saveAll(); renderBulkSell(); }
@@ -358,19 +332,6 @@ function loadData() {
         let d = JSON.parse(s);
         myCards = d.myCards || []; team = d.team || []; afkTeam = d.afkTeam || []; points = d.points || 100; wave = d.wave || 1; playerHp = d.playerHp || 100; activeBuffs = d.activeBuffs || {}; mode = d.mode || "normal"; defeatHistory = d.defeatHistory || []; shopItems = d.shopItems || [null, null, null]; freeSpins = d.freeSpins ?? 5; fatigue = d.fatigue || 0; achievements = d.achievements || achievements; totalWins = d.totalWins || 0; playerLevel = d.playerLevel || 1; playerExp = d.playerExp || 0; if (d.upgrades) { for (let k in upgrades) { if (d.upgrades[k]) upgrades[k] = d.upgrades[k]; } } discoveredCards = d.discoveredCards || []; hasSukunaFingers = d.hasSukunaFingers || false; deathNoteTarget = d.deathNoteTarget; skipUsed = d.skipUsed || false; hasFireArtifact = d.hasFireArtifact || false; hasCompoundV = d.hasCompoundV || {}; usedCodes = d.usedCodes || []; moderUnlocked = d.moderUnlocked || false; afkWavesCompleted = d.afkWavesCompleted || 0; highestCheckpoint = d.highestCheckpoint || 1; rebirthCount = d.rebirthCount || 0; rebirthStats = d.rebirthStats || []; activeCheckpoint = d.activeCheckpoint || 0; autoSellSettings = d.autoSellSettings || {}; purchasedAutoSell = d.purchasedAutoSell || {}; autoRest = d.autoRest || {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = d.abilityUpgradeLevel || 0; if (d.evoProgress) evoProgress = d.evoProgress; dekusNerfWaves = d.dekusNerfWaves || 0;
     } else { for (let i = 0; i < 3; i++) myCards.push(createCard(getRandomRarity())); team = [0, 1, 2]; }
-    for (let i = 0; i < myCards.length; i++) {
-        let card = myCards[i];
-        if ((card.name === 'Герой' || card.name === 'Босс-призрак') && card.rarity && customCardTemplates[card.rarity]) {
-            let templates = customCardTemplates[card.rarity].filter(t => (t.minRebirth || 0) <= rebirthCount);
-            if (templates.length > 0) {
-                let t = templates[Math.floor(Math.random() * templates.length)];
-                card.name = t.name; card.damage = t.damage ?? card.damage; card.hp = t.hp ?? card.hp;
-                card.ability = t.ability || null; card.statusAbility = t.statusAbility || null;
-                card.extraStatus = t.extraStatus || null; card.universe = t.universe || '?';
-                card.unsellable = t.unsellable || false; card.sellPrice = t.sellPrice ?? card.sellPrice;
-            }
-        }
-    }
     team = team.filter(i => myCards[i]); if (team.length > 6) team = team.slice(0, 6);
     afkTeam = afkTeam.filter(i => myCards[i]); if (afkTeam.length > 6) afkTeam = afkTeam.slice(0, 6);
     refreshShop(); generateEnemy(); saveAll();
@@ -390,7 +351,6 @@ function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<
 document.addEventListener("DOMContentLoaded", function () {
     loadData(); renderAll(); updateLevelDisplay(); updateFatigue(); updateRestBtn(); updateClaimTimer();
     document.getElementById("afkWave").innerText = wave;
-    document.getElementById("worldIndicator").innerHTML += ' <button id="musicToggleBtn" class="btn" style="padding:2px 8px;font-size:12px;margin-left:8px;" onclick="toggleMusic()">🔊</button>';
     setInterval(function () { renderShop(); renderActiveBuffs(); updatePlayerStats(); renderFreeSpins(); checkFreeSpinReset(); updateClaimTimer(); if (Date.now() - (lastChallengeReset || 0) >= 86400000) genChallenges(); saveAll(); }, 1000);
     document.getElementById("clickArea").addEventListener("click", handleClick);
     document.getElementById("clearTeamBtn").addEventListener("click", function () { team = []; renderAll(); updatePlayerStats(); });
@@ -407,4 +367,4 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".toggle span").forEach(function (s) { s.addEventListener("click", function () { setMode(this.dataset.mode); }); });
     if (!moderUnlocked) document.querySelector('.toggle span[data-mode="moder"]').style.display = "none";
     setMode(mode);
-});
+}); 
