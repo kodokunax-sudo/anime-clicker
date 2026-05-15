@@ -1,4 +1,38 @@
 // ========== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+let currentSlot = -1;
+let slotData = {};
+
+// ========== СЛОТЫ СОХРАНЕНИЙ ==========
+function getSlotKey(slot) { return "cgV20_slot" + slot; }
+function loadSlotMeta(slot) { let s = localStorage.getItem(getSlotKey(slot) + "_meta"); return s ? JSON.parse(s) : { nickname: "Слот " + (slot + 1), exists: false }; }
+function saveSlotMeta(slot, meta) { localStorage.setItem(getSlotKey(slot) + "_meta", JSON.stringify(meta)); }
+function loadGameFromSlot(slot) { let s = localStorage.getItem(getSlotKey(slot)); return s ? JSON.parse(s) : null; }
+function saveGameToSlot(slot) { localStorage.setItem(getSlotKey(slot), JSON.stringify(slotData)); let meta = loadSlotMeta(slot); meta.exists = true; meta.nickname = slotData.nickname || meta.nickname; saveSlotMeta(slot, meta); }
+function selectSlot(slot) {
+    currentSlot = slot;
+    let saved = loadGameFromSlot(slot);
+    let meta = loadSlotMeta(slot);
+    if (saved) {
+        loadGameData(saved);
+    } else {
+        initNewGame();
+        slotData.nickname = meta.nickname;
+    }
+    document.getElementById("slotSelectScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+    document.getElementById("nicknameDisplay").innerText = slotData.nickname || meta.nickname;
+    saveGameToSlot(slot);
+    renderAll(); updateLevelDisplay(); updateFatigue(); updateRestBtn(); updateClaimTimer();
+}
+function loadGameData(d) {
+    myCards = d.myCards || []; team = d.team || []; afkTeam = d.afkTeam || []; points = d.points || 100; wave = d.wave || 1; playerHp = d.playerHp || 100; activeBuffs = d.activeBuffs || {}; mode = d.mode || "normal"; defeatHistory = d.defeatHistory || []; shopItems = d.shopItems || [null, null, null]; freeSpins = d.freeSpins ?? 5; fatigue = d.fatigue || 0; achievements = d.achievements || achievements; totalWins = d.totalWins || 0; playerLevel = d.playerLevel || 1; playerExp = d.playerExp || 0; if (d.upgrades) { for (let k in upgrades) { if (d.upgrades[k]) upgrades[k] = d.upgrades[k]; } } discoveredCards = d.discoveredCards || []; hasSukunaFingers = d.hasSukunaFingers || false; deathNoteTarget = d.deathNoteTarget; skipUsed = d.skipUsed || false; hasFireArtifact = d.hasFireArtifact || false; hasCompoundV = d.hasCompoundV || {}; usedCodes = d.usedCodes || []; moderUnlocked = d.moderUnlocked || false; afkWavesCompleted = d.afkWavesCompleted || 0; highestCheckpoint = d.highestCheckpoint || 1; rebirthCount = d.rebirthCount || 0; rebirthStats = d.rebirthStats || []; activeCheckpoint = d.activeCheckpoint || 0; autoSellSettings = d.autoSellSettings || {}; purchasedAutoSell = d.purchasedAutoSell || {}; autoRest = d.autoRest || {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = d.abilityUpgradeLevel || 0; if (d.evoProgress) evoProgress = d.evoProgress; dekusNerfWaves = d.dekusNerfWaves || 0; newcomerBonus = d.newcomerBonus || false; newcomerBonusEnd = d.newcomerBonusEnd || 0; slotData.nickname = d.nickname || loadSlotMeta(currentSlot).nickname;
+}
+function initNewGame() {
+    myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; activeBuffs = {}; mode = "normal"; defeatHistory = []; shopItems = [null, null, null]; freeSpins = 5; fatigue = 0; achievements = {win10:false,win50:false,win100:false,win500:false,legendaryTeam:false,secretTeam:false,level20:false,level50:false}; totalWins = 0; playerLevel = 1; playerExp = 0; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила удара",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит. шанс",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Сопр. усталости",reqLevel:10},abilityPower:{level:0,baseCost:200,increment:0.1,name:"✨ Усиление спос.",reqLevel:30}}; discoveredCards = []; hasSukunaFingers = false; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; usedCodes = []; moderUnlocked = false; afkWavesCompleted = 0; highestCheckpoint = 1; rebirthCount = 0; rebirthStats = []; activeCheckpoint = 0; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = 0; evoProgress = {wavesSaitamaGarou:0,damageGarpKuzan:0,luffyKingUnlocked:false,sgUnlocked:false,gkUnlocked:false,sevenUnlocked:false,williamUnlocked:false}; dekusNerfWaves = 0; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2];
+}
+function saveAll() { if (currentSlot < 0) return; slotData.myCards = myCards; slotData.team = team; slotData.afkTeam = afkTeam; slotData.points = points; slotData.wave = wave; slotData.playerHp = playerHp; slotData.activeBuffs = activeBuffs; slotData.mode = mode; slotData.defeatHistory = defeatHistory; slotData.shopItems = shopItems; slotData.upgrades = upgrades; slotData.freeSpins = freeSpins; slotData.fatigue = fatigue; slotData.achievements = achievements; slotData.totalWins = totalWins; slotData.playerLevel = playerLevel; slotData.playerExp = playerExp; slotData.discoveredCards = discoveredCards; slotData.hasSukunaFingers = hasSukunaFingers; slotData.deathNoteTarget = deathNoteTarget; slotData.skipUsed = skipUsed; slotData.hasFireArtifact = hasFireArtifact; slotData.hasCompoundV = hasCompoundV; slotData.usedCodes = usedCodes; slotData.moderUnlocked = moderUnlocked; slotData.afkWavesCompleted = afkWavesCompleted; slotData.highestCheckpoint = highestCheckpoint; slotData.rebirthCount = rebirthCount; slotData.rebirthStats = rebirthStats; slotData.activeCheckpoint = activeCheckpoint; slotData.autoSellSettings = autoSellSettings; slotData.purchasedAutoSell = purchasedAutoSell; slotData.autoRest = autoRest; slotData.abilityUpgradeLevel = abilityUpgradeLevel; slotData.evoProgress = evoProgress; slotData.dekusNerfWaves = dekusNerfWaves; slotData.newcomerBonus = newcomerBonus; slotData.newcomerBonusEnd = newcomerBonusEnd; slotData.nickname = slotData.nickname || loadSlotMeta(currentSlot).nickname; saveGameToSlot(currentSlot); }
+
+// ========== ИГРОВЫЕ ПЕРЕМЕННЫЕ (инициализируются через loadGameData) ==========
 let myCards=[],team=[],afkTeam=[],points=100,wave=1,playerHp=100,currentEnemy=null,clicksSinceLastCounter=0,activeBuffs={},defeatHistory=[],mode="normal",shopItems=[null,null,null],shopRefreshTime=null,lastCardClaimTime=null,freeSpins=5,lastFreeSpinReset=null,fatigue=0,achievements={win10:false,win50:false,win100:false,win500:false,legendaryTeam:false,secretTeam:false,level20:false,level50:false},totalWins=0,playerLevel=1,playerExp=0,resurrectedThisFight=false,firstAttackThisFight=true,hasSukunaFingers=false,deathNoteTarget=null,afkActive=false,afkTimer=null,afkWavesCompleted=0,afkCurrentWave=1,usedCodes=[],moderUnlocked=false,discoveredCards=[],highestCheckpoint=1;
 let rebirthCount=0, rebirthStats=[], activeCheckpoint=0, autoSellSettings={"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}, purchasedAutoSell={"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}, autoRest={active:false,threshold:90,purchased:false}, abilityUpgradeLevel=0;
 let evoProgress = { wavesSaitamaGarou:0, damageGarpKuzan:0, luffyKingUnlocked:false, sgUnlocked:false, gkUnlocked:false, sevenUnlocked:false, williamUnlocked:false };
@@ -107,13 +141,8 @@ function updateChallengeProgress(tp, v) { challenges.forEach(ch => { if (!ch.com
 function getRebirthRequirement() { return 75 + rebirthCount * 75 + Math.floor(Math.pow(rebirthCount, 1.5)) * 10; }
 function doRebirth() { let req = getRebirthRequirement(); if (highestCheckpoint < req) { alert('Нужно ' + req + ' волн!'); return; } rebirthStats.push({ rebirth: rebirthCount, totalWins, highestWave: highestCheckpoint, totalCards: myCards.length, playerLevel, world: getWorldForWave(highestCheckpoint).name }); myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; playerLevel = 1; playerExp = 0; fatigue = 0; activeBuffs = {}; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Усталость",reqLevel:10},abilityPower:{level:abilityUpgradeLevel,baseCost:200,increment:0.1,name:"✨ Усиление",reqLevel:30}}; rebirthCount++; highestCheckpoint = 1; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2]; sfxRebirth(); refreshShop(); generateEnemy(); saveAll(); renderAll(); alert('Ребиртх ' + rebirthCount + '! Множитель x' + getRebirthMult().toFixed(1)); }
 
-// ========== СОХРАНЕНИЯ ==========
-function loadData() { let s = localStorage.getItem("cgV20"); if (s) { let d = JSON.parse(s); myCards = d.myCards || []; team = d.team || []; afkTeam = d.afkTeam || []; points = d.points || 100; wave = d.wave || 1; playerHp = d.playerHp || 100; activeBuffs = d.activeBuffs || {}; mode = d.mode || "normal"; defeatHistory = d.defeatHistory || []; shopItems = d.shopItems || [null, null, null]; freeSpins = d.freeSpins ?? 5; fatigue = d.fatigue || 0; achievements = d.achievements || achievements; totalWins = d.totalWins || 0; playerLevel = d.playerLevel || 1; playerExp = d.playerExp || 0; if (d.upgrades) { for (let k in upgrades) { if (d.upgrades[k]) upgrades[k] = d.upgrades[k]; } } discoveredCards = d.discoveredCards || []; hasSukunaFingers = d.hasSukunaFingers || false; deathNoteTarget = d.deathNoteTarget; skipUsed = d.skipUsed || false; hasFireArtifact = d.hasFireArtifact || false; hasCompoundV = d.hasCompoundV || {}; usedCodes = d.usedCodes || []; moderUnlocked = d.moderUnlocked || false; afkWavesCompleted = d.afkWavesCompleted || 0; highestCheckpoint = d.highestCheckpoint || 1; rebirthCount = d.rebirthCount || 0; rebirthStats = d.rebirthStats || []; activeCheckpoint = d.activeCheckpoint || 0; autoSellSettings = d.autoSellSettings || {}; purchasedAutoSell = d.purchasedAutoSell || {}; autoRest = d.autoRest || {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = d.abilityUpgradeLevel || 0; if (d.evoProgress) evoProgress = d.evoProgress; dekusNerfWaves = d.dekusNerfWaves || 0; newcomerBonus = d.newcomerBonus || false; newcomerBonusEnd = d.newcomerBonusEnd || 0; } else { for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2]; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; } team = team.filter(i => myCards[i]); if (team.length > 6) team = team.slice(0, 6); afkTeam = afkTeam.filter(i => myCards[i]); if (afkTeam.length > 6) afkTeam = afkTeam.slice(0, 6); refreshShop(); generateEnemy(); saveAll(); }
-function saveAll() { localStorage.setItem("cgV20", JSON.stringify({ myCards, team, afkTeam, points, wave, playerHp, activeBuffs, mode, defeatHistory, shopItems, shopRefreshTime, upgrades, freeSpins, lastFreeSpinReset, lastCardClaimTime, fatigue, achievements, totalWins, playerLevel, playerExp, discoveredCards, hasSukunaFingers, deathNoteTarget, skipUsed, hasFireArtifact, hasCompoundV, usedCodes, moderUnlocked, afkWavesCompleted, highestCheckpoint, rebirthCount, rebirthStats, activeCheckpoint, autoSellSettings, purchasedAutoSell, autoRest, abilityUpgradeLevel, evoProgress, dekusNerfWaves, newcomerBonus, newcomerBonusEnd })); }
-function setMode(m) { if (m === "moder" && !moderUnlocked) return; mode = m; saveAll(); updateClaimTimer(); document.querySelectorAll(".toggle span").forEach(s => s.classList.toggle("active", s.dataset.mode === m)); }
-
 // ========== ТАБЫ ==========
-function switchTab(tabName) { document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active")); let btn = document.querySelector(".tab-btn[data-tab='" + tabName + "']"); if (btn) btn.classList.add("active"); document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active")); let tab = document.getElementById(tabName + "Tab"); if (tab) tab.classList.add("active"); if (tabName === "shop") renderShop(); if (tabName === "rebirth") { renderRebirthInfo(); renderRebirthStats(); } }
+function switchTab(tabName) { document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active")); let btn = document.querySelector(".tab-btn[data-tab='" + tabName + "']"); if (btn) btn.classList.add("active"); document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active")); let tab = document.getElementById(tabName + "Tab"); if (tab) tab.classList.add("active"); if (tabName === "shop") renderShop(); if (tabName === "rebirth") { renderRebirthInfo(); renderRebirthStats(); } if (tabName === "slots") { renderSlotsInGame(); } }
 function switchSubTab(subtabName, parentTabId) { let parent = document.getElementById(parentTabId); if (!parent) return; parent.querySelectorAll(".sub-tab-btn").forEach(b => b.classList.remove("active")); let subBtn = parent.querySelector(".sub-tab-btn[data-subtab='" + subtabName + "']"); if (subBtn) subBtn.classList.add("active"); parent.querySelectorAll(".sub-tab-content").forEach(t => t.classList.remove("active")); let sub = document.getElementById(subtabName + "SubTab"); if (sub) sub.classList.add("active"); if (subtabName === "book") renderBook(); if (subtabName === "evolution") renderEvoTab(); if (subtabName === "shopItems") renderShop(); if (subtabName === "bulkSell") renderBulkSell(); if (subtabName === "autoRest") renderAutoRest(); if (subtabName === "upgrades") renderUpgrades(); if (subtabName === "challenges") renderChallenges(); if (subtabName === "checkpoint") renderCheckpoints(); if (subtabName === "rebirthMain") renderRebirthInfo(); if (subtabName === "rebirthStats") renderRebirthStats(); }
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
@@ -121,4 +150,62 @@ function renderAll() { renderMyCards(); renderTeam(); renderAfkTeam(); renderEne
 function renderPoints() { ['pointsAmount', 'pointsAmount2', 'pointsAmount3', 'pointsAmountBulk', 'pointsAmountRest'].forEach(id => { let e = document.getElementById(id); if (e) e.innerText = points; }); }
 function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])) : ''; }
 
-document.addEventListener("DOMContentLoaded", function () { loadData(); renderAll(); updateLevelDisplay(); updateFatigue(); updateRestBtn(); updateClaimTimer(); document.getElementById("afkWave").innerText = wave; setInterval(function () { renderShop(); renderActiveBuffs(); updatePlayerStats(); renderFreeSpins(); checkFreeSpinReset(); updateClaimTimer(); if (Date.now() - (lastChallengeReset || 0) >= 86400000) genChallenges(); saveAll(); }, 1000); document.getElementById("clickArea").addEventListener("click", handleClick); document.getElementById("clearTeamBtn").addEventListener("click", function () { team = []; renderAll(); updatePlayerStats(); }); document.getElementById("clearAfkTeamBtn").addEventListener("click", function () { afkTeam = []; renderAll(); }); document.getElementById("useFreeSpinBtn").addEventListener("click", useFreeSpin); document.getElementById("buySpinBtn").addEventListener("click", buySpin); document.getElementById("claimCardBtn").addEventListener("click", claimCardByTimer); document.getElementById("restBtn").addEventListener("click", rest); document.getElementById("toggleAfkBtn").addEventListener("click", function () { afkActive ? stopAfk() : startAfk(); }); document.getElementById("submitCodeBtn").addEventListener("click", submitCode); document.getElementById("doRebirthBtn").addEventListener("click", doRebirth); document.querySelectorAll(".tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { switchTab(this.dataset.tab); }); }); document.querySelectorAll(".sub-tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { var parent = this.parentElement; while (parent && !parent.classList.contains("tab-content")) { parent = parent.parentElement; } if (!parent) return; switchSubTab(this.dataset.subtab, parent.id); }); }); document.querySelectorAll(".toggle span").forEach(function (s) { s.addEventListener("click", function () { setMode(this.dataset.mode); }); }); if (!moderUnlocked) document.querySelector('.toggle span[data-mode="moder"]').style.display = "none"; setMode(mode); });
+function showSlotSelectScreen() {
+    document.getElementById("slotSelectScreen").style.display = "block";
+    document.getElementById("gameScreen").style.display = "none";
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+        let meta = loadSlotMeta(i);
+        html += '<div class="slot-select" onclick="showNicknamePrompt(' + i + ')"><div style="font-size:20px;font-weight:900;">' + meta.nickname + '</div><div style="font-size:12px;color:#aaa;">' + (meta.exists ? 'Есть сохранение' : 'Пустой слот') + '</div></div>';
+    }
+    document.getElementById("slotList").innerHTML = html;
+}
+function showNicknamePrompt(slot) {
+    let meta = loadSlotMeta(slot);
+    let nickname = prompt("Введите ник для слота " + (slot + 1) + ":", meta.nickname);
+    if (nickname !== null && nickname.trim() !== "") {
+        meta.nickname = nickname.trim();
+        saveSlotMeta(slot, meta);
+        showSlotSelectScreen();
+    }
+    if (nickname !== null && nickname.trim() === "" && meta.exists) {
+        selectSlot(slot);
+    }
+}
+function renderSlotsInGame() {
+    let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+    for (let i = 0; i < 3; i++) {
+        let meta = loadSlotMeta(i);
+        html += '<div class="slot-select ' + (i === currentSlot ? 'active' : '') + '" onclick="switchToSlot(' + i + ')"><div style="font-size:18px;font-weight:900;">' + meta.nickname + '</div><div style="font-size:12px;color:#aaa;">' + (meta.exists ? 'Есть сохранение' : 'Пустой слот') + (i === currentSlot ? ' ← Текущий' : '') + '</div></div>';
+    }
+    html += '</div>';
+    document.getElementById("slotsListInGame").innerHTML = html;
+}
+function switchToSlot(slot) {
+    if (slot === currentSlot) return;
+    if (confirm("Сохранить текущий прогресс перед переключением?")) {
+        saveAll();
+    }
+    selectSlot(slot);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    showSlotSelectScreen();
+    document.getElementById("clickArea").addEventListener("click", function() {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        handleClick();
+    });
+    document.getElementById("clearTeamBtn").addEventListener("click", function () { team = []; saveAll(); renderAll(); updatePlayerStats(); });
+    document.getElementById("clearAfkTeamBtn").addEventListener("click", function () { afkTeam = []; saveAll(); renderAll(); });
+    document.getElementById("useFreeSpinBtn").addEventListener("click", useFreeSpin);
+    document.getElementById("buySpinBtn").addEventListener("click", buySpin);
+    document.getElementById("claimCardBtn").addEventListener("click", claimCardByTimer);
+    document.getElementById("restBtn").addEventListener("click", rest);
+    document.getElementById("toggleAfkBtn").addEventListener("click", function () { afkActive ? stopAfk() : startAfk(); });
+    document.getElementById("submitCodeBtn").addEventListener("click", submitCode);
+    document.getElementById("doRebirthBtn").addEventListener("click", doRebirth);
+    document.querySelectorAll(".tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { switchTab(this.dataset.tab); }); });
+    document.querySelectorAll(".sub-tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { var parent = this.parentElement; while (parent && !parent.classList.contains("tab-content")) { parent = parent.parentElement; } if (!parent) return; switchSubTab(this.dataset.subtab, parent.id); }); });
+    document.querySelectorAll(".toggle span").forEach(function (s) { s.addEventListener("click", function () { setMode(this.dataset.mode); }); });
+    setInterval(function () { if (currentSlot >= 0) { renderShop(); renderActiveBuffs(); updatePlayerStats(); renderFreeSpins(); checkFreeSpinReset(); updateClaimTimer(); if (Date.now() - (lastChallengeReset || 0) >= 86400000) genChallenges(); saveAll(); } }, 1000);
+});
