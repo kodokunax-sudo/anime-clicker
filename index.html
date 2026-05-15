@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Аниме Кликер v27 — Миры и Пощада</title>
+    <title>Аниме Кликер v28 — Слоты сохранений</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
         :root { --bg: #1a1a2e; --card-bg: #1e1e2f; --btn-bg: #2c2c3a; --gold: #f5af19; --red: #e74c3c; --green: #2ecc71; --boss: #ff4500; }
@@ -107,116 +107,130 @@
         .dialog-option:hover { background: rgba(245,175,25,0.25); border-color: #f5af19; }
         .card-image { width: 70px; height: 70px; border-radius: 10px; margin-bottom: 4px; object-fit: cover; }
         .card-placeholder { width: 70px; height: 70px; border-radius: 10px; margin-bottom: 4px; background: #2c2c3a; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #aaa; }
+        .slot-select { background: rgba(30,30,47,0.9); border-radius: 20px; padding: 20px; margin-bottom: 15px; border: 2px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; text-align: center; }
+        .slot-select:hover { border-color: #f5af19; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(245,175,25,0.3); }
+        .slot-select.active { border-color: #2ecc71; box-shadow: 0 0 15px rgba(46,204,113,0.3); }
+        .nickname-display { background: linear-gradient(135deg, #f5af19, #f12711); color: white; padding: 3px 10px; border-radius: 15px; font-weight: 800; font-size: 12px; display: inline-block; margin-left: 8px; }
     </style>
 </head>
 <body>
 <div class="app" id="appContainer">
-    <div class="mode-switch"><span class="mode-label">🎮 Режим</span><div class="toggle" id="modeToggle"><span class="active" data-mode="normal">Обычный</span><span data-mode="moder">Модер</span></div></div>
-    <div class="world-indicator" id="worldIndicator">🌍 Мир: Лес начала и конца <button id="musicToggleBtn" class="btn" style="padding:2px 8px;font-size:12px;margin-left:8px;" onclick="toggleMusic()">🔇</button></div>
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="collection">🏠 Коллекция</button>
-        <button class="tab-btn" data-tab="battle">⚔️ Битва</button>
-        <button class="tab-btn" data-tab="shop">🛒 Лавка</button>
-        <button class="tab-btn" data-tab="rebirth">🔄 Ребиртх</button>
-    </div>
-    <div id="collectionTab" class="tab-content active">
-        <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-subtab="myCards">📚 Карты</button>
-            <button class="sub-tab-btn" data-subtab="book">📖 Книга</button>
-            <button class="sub-tab-btn" data-subtab="evolution">🧬 Эволюция</button>
-        </div>
-        <div id="myCardsSubTab" class="sub-tab-content active">
-            <div class="card"><div class="card-title">📚 Карты</div><div id="collectionGrid" class="cards-grid"></div><div class="flex-between" style="margin-top:10px;font-weight:800;"><span>Всего: <span id="totalCards">0</span></span></div></div>
-            <div class="card"><div class="card-title">⚔️ Отряд (6)<button id="clearTeamBtn" class="btn" style="background:#e74c3c;border-color:#c0392b;float:right;padding:4px 10px;">Очистить</button></div><div id="teamList"></div><div id="teamStats" class="buff-active">💪 Урон: <span id="totalDamage">0</span> | ❤️ HP: <span id="totalHpBonus">0</span></div></div>
-            <div class="card"><div class="card-title">💤 АФК (6)<button id="clearAfkTeamBtn" class="btn" style="background:#e74c3c;border-color:#c0392b;float:right;padding:4px 10px;">Очистить</button></div><div id="afkTeamList"></div><div id="afkTeamStats" class="buff-active">💪 Урон: <span id="afkTotalDamage">0</span> | ❤️ HP: <span id="afkTotalHpBonus">0</span></div></div>
-            <div class="card"><div class="card-title">🏆 Достижения</div><div id="achievementsList" style="display:flex;flex-wrap:wrap;gap:5px;"></div></div>
-            <button id="claimCardBtn" class="btn btn-primary" style="width:100%;margin-top:10px;font-size:16px;padding:15px;">🎴 Получить карту (2ч)</button>
-            <div id="claimTimer" class="timer-text"></div>
-        </div>
-        <div id="bookSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title">📖 Бестиарий (<span id="discoveredCount">0</span>/<span id="totalTemplatesCount">0</span>)<br><small style="color:#aaa;font-weight:600;text-transform:none;">Модер: нажми. Двойной тап: инфо</small></div><div id="bookList" class="book-grid"></div></div>
-        </div>
-        <div id="evolutionSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title" style="border-color:#9b59b6;color:#e056fd;">🧬 Эволюция <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:none;display:block;margin-top:4px;">Открывается на 5 ребиртхе</span></div><div id="evoContent"></div></div>
+    <div id="slotSelectScreen" style="display:block;">
+        <div class="card"><div class="card-title">🎮 Выберите слот сохранения</div>
+            <div id="slotList"></div>
         </div>
     </div>
-    <div id="battleTab" class="tab-content">
-        <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-subtab="fight">⚔️ Бой</button>
-            <button class="sub-tab-btn" data-subtab="afk">💤 АФК</button>
-            <button class="sub-tab-btn" data-subtab="checkpoint">🚩 Чекпоинты</button>
+    <div id="gameScreen" style="display:none;">
+        <div class="mode-switch"><span class="mode-label">🎮 Режим</span><div class="toggle" id="modeToggle"><span class="active" data-mode="normal">Обычный</span><span data-mode="moder">Модер</span></div></div>
+        <div class="world-indicator" id="worldIndicator">🌍 Мир: Лес начала и конца <button id="musicToggleBtn" class="btn" style="padding:2px 8px;font-size:12px;margin-left:8px;" onclick="toggleMusic()">🔇</button> <span class="nickname-display" id="nicknameDisplay"></span></div>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="collection">🏠 Коллекция</button>
+            <button class="tab-btn" data-tab="battle">⚔️ Битва</button>
+            <button class="tab-btn" data-tab="shop">🛒 Лавка</button>
+            <button class="tab-btn" data-tab="rebirth">🔄 Ребиртх</button>
+            <button class="tab-btn" data-tab="slots">💾 Слоты</button>
         </div>
-        <div id="fightSubTab" class="sub-tab-content active">
-            <div class="card"><div class="card-title">👾 Волна <span id="waveNumber">1</span></div>
-                <div class="fatigue-bar"><div>😫 Усталость: <span id="fatiguePercent">0</span>%</div><div class="fatigue-progress" id="fatigueBar" style="width:0%"></div><button id="restBtn" class="btn" style="margin-top:10px;padding:8px 15px;width:100%;">💤 Отдых (<span id="restCost">30</span>⭐)</button></div>
-                <div id="statusEffects" style="min-height:20px;margin-bottom:10px;margin-top:5px;"></div>
-                <div id="enemyStatusEffects" style="min-height:20px;margin-bottom:5px;"></div>
-                <div id="bossDialogue" class="boss-dialogue" style="display:none;"></div>
-                <div id="enemyContainer" class="enemy-card"></div>
-                <div id="dialogBox" style="display:none;"></div>
-                <div class="click-area" id="clickArea">💥 НАЖМИ ДЛЯ АТАКИ! 💥</div>
-                <button id="spareBtn" class="btn btn-boss" style="width:100%;padding:15px;margin:10px 0;display:none;" onclick="spareBoss()">🤝 ПОЩАДИТЬ БОССА (50% шанс)</button>
-                <div class="fight-stats"><div>💪 Урон: <span id="playerDamage">0</span></div><div>❤️ HP: <span id="playerHp">100</span>/<span id="playerMaxHp">100</span></div><div>⏳ Удар через: <span id="clicksToCounter">3</span></div><div>⭐ Награда: <span id="rewardPreview">1</span></div></div>
-                <div id="fightResult" style="margin-top:12px;font-weight:900;text-align:center;min-height:24px;font-size:16px;"></div>
+        <div id="collectionTab" class="tab-content active">
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" data-subtab="myCards">📚 Карты</button>
+                <button class="sub-tab-btn" data-subtab="book">📖 Книга</button>
+                <button class="sub-tab-btn" data-subtab="evolution">🧬 Эволюция</button>
             </div>
-            <div class="card"><div class="card-title">💀 Поражения</div><div id="fightHistory" style="max-height:120px;overflow-y:auto;font-size:12px;font-weight:600;padding-right:5px;"></div></div>
+            <div id="myCardsSubTab" class="sub-tab-content active">
+                <div class="card"><div class="card-title">📚 Карты</div><div id="collectionGrid" class="cards-grid"></div><div class="flex-between" style="margin-top:10px;font-weight:800;"><span>Всего: <span id="totalCards">0</span></span></div></div>
+                <div class="card"><div class="card-title">⚔️ Отряд (6)<button id="clearTeamBtn" class="btn" style="background:#e74c3c;border-color:#c0392b;float:right;padding:4px 10px;">Очистить</button></div><div id="teamList"></div><div id="teamStats" class="buff-active">💪 Урон: <span id="totalDamage">0</span> | ❤️ HP: <span id="totalHpBonus">0</span></div></div>
+                <div class="card"><div class="card-title">💤 АФК (6)<button id="clearAfkTeamBtn" class="btn" style="background:#e74c3c;border-color:#c0392b;float:right;padding:4px 10px;">Очистить</button></div><div id="afkTeamList"></div><div id="afkTeamStats" class="buff-active">💪 Урон: <span id="afkTotalDamage">0</span> | ❤️ HP: <span id="afkTotalHpBonus">0</span></div></div>
+                <div class="card"><div class="card-title">🏆 Достижения</div><div id="achievementsList" style="display:flex;flex-wrap:wrap;gap:5px;"></div></div>
+                <button id="claimCardBtn" class="btn btn-primary" style="width:100%;margin-top:10px;font-size:16px;padding:15px;">🎴 Получить карту (2ч)</button>
+                <div id="claimTimer" class="timer-text"></div>
+            </div>
+            <div id="bookSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title">📖 Бестиарий (<span id="discoveredCount">0</span>/<span id="totalTemplatesCount">0</span>)</div><div id="bookList" class="book-grid"></div></div>
+            </div>
+            <div id="evolutionSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title" style="border-color:#9b59b6;color:#e056fd;">🧬 Эволюция</div><div id="evoContent"></div></div>
+            </div>
         </div>
-        <div id="afkSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title">💤 АФК Фарм</div><div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:20px;text-align:center;font-weight:800;font-size:15px;"><div>Статус: <span id="afkStatus" class="afk-inactive">Неактивен</span></div><div style="margin:10px 0;">Волна: <span id="afkWave" style="color:var(--gold);">1</span> | Прошло: <span id="afkWavesCompleted" style="color:var(--gold);">0</span></div><button id="toggleAfkBtn" class="btn btn-primary" style="margin-top:10px;width:100%;padding:12px;font-size:16px;">▶ Запустить</button></div></div>
+        <div id="battleTab" class="tab-content">
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" data-subtab="fight">⚔️ Бой</button>
+                <button class="sub-tab-btn" data-subtab="afk">💤 АФК</button>
+                <button class="sub-tab-btn" data-subtab="checkpoint">🚩 Чекпоинты</button>
+            </div>
+            <div id="fightSubTab" class="sub-tab-content active">
+                <div class="card"><div class="card-title">👾 Волна <span id="waveNumber">1</span></div>
+                    <div class="fatigue-bar"><div>😫 Усталость: <span id="fatiguePercent">0</span>%</div><div class="fatigue-progress" id="fatigueBar" style="width:0%"></div><button id="restBtn" class="btn" style="margin-top:10px;padding:8px 15px;width:100%;">💤 Отдых (<span id="restCost">30</span>⭐)</button></div>
+                    <div id="statusEffects" style="min-height:20px;margin-bottom:10px;margin-top:5px;"></div>
+                    <div id="enemyStatusEffects" style="min-height:20px;margin-bottom:5px;"></div>
+                    <div id="bossDialogue" class="boss-dialogue" style="display:none;"></div>
+                    <div id="enemyContainer" class="enemy-card"></div>
+                    <div id="dialogBox" style="display:none;"></div>
+                    <div class="click-area" id="clickArea">💥 НАЖМИ ДЛЯ АТАКИ! 💥</div>
+                    <button id="spareBtn" class="btn btn-boss" style="width:100%;padding:15px;margin:10px 0;display:none;" onclick="spareBoss()">🤝 ПОЩАДИТЬ БОССА (50% шанс)</button>
+                    <div class="fight-stats"><div>💪 Урон: <span id="playerDamage">0</span></div><div>❤️ HP: <span id="playerHp">100</span>/<span id="playerMaxHp">100</span></div><div>⏳ Удар через: <span id="clicksToCounter">3</span></div><div>⭐ Награда: <span id="rewardPreview">1</span></div></div>
+                    <div id="fightResult" style="margin-top:12px;font-weight:900;text-align:center;min-height:24px;font-size:16px;"></div>
+                </div>
+                <div class="card"><div class="card-title">💀 Поражения</div><div id="fightHistory" style="max-height:120px;overflow-y:auto;font-size:12px;font-weight:600;padding-right:5px;"></div></div>
+            </div>
+            <div id="afkSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title">💤 АФК Фарм</div><div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:20px;text-align:center;font-weight:800;font-size:15px;"><div>Статус: <span id="afkStatus" class="afk-inactive">Неактивен</span></div><div style="margin:10px 0;">Волна: <span id="afkWave" style="color:var(--gold);">1</span> | Прошло: <span id="afkWavesCompleted" style="color:var(--gold);">0</span></div><button id="toggleAfkBtn" class="btn btn-primary" style="margin-top:10px;width:100%;padding:12px;font-size:16px;">▶ Запустить</button></div></div>
+            </div>
+            <div id="checkpointSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title">🚩 Чекпоинты</div><div id="checkpointList"></div></div>
+            </div>
         </div>
-        <div id="checkpointSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title">🚩 Чекпоинты</div><div id="checkpointList"></div></div>
+        <div id="shopTab" class="tab-content">
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" data-subtab="shopItems">🛍️ Товары</button>
+                <button class="sub-tab-btn" data-subtab="bulkSell">💰 Скупка</button>
+                <button class="sub-tab-btn" data-subtab="autoRest">💤 Автосон</button>
+                <button class="sub-tab-btn" data-subtab="upgrades">📈 Прокачка</button>
+                <button class="sub-tab-btn" data-subtab="challenges">🔥 Квесты</button>
+                <button class="sub-tab-btn" data-subtab="codes">🎁 Коды</button>
+            </div>
+            <div id="shopItemsSubTab" class="sub-tab-content active">
+                <div class="points">⭐ <span id="pointsAmount2">0</span></div>
+                <div class="free-spins"><div style="font-weight:900;font-size:16px;">🎰 <span id="freeSpinsCount">0</span> прокруток</div><button id="useFreeSpinBtn" class="btn btn-primary" style="margin-top:10px;width:100%;padding:10px;">🎲 Крутить</button></div>
+                <div class="card"><div class="card-title">🛍️ Товары <button class="btn" style="padding:4px 10px;font-size:11px;float:right;border-radius:20px;" onclick="refreshShopNow()">🔄 1000⭐</button></div><div id="shopItems" class="shop-grid"></div></div>
+                <div class="card"><div class="card-title">🗿 Артефакты</div><div id="artifactItems" class="shop-grid"></div></div>
+                <div class="card"><div class="card-title">🎲 Крутки</div><div class="shop-item"><div>Прокрутка</div><div><span class="shop-price">150⭐</span><button class="btn btn-primary" style="padding:6px 12px;" id="buySpinBtn">Купить</button></div></div></div>
+                <div class="card"><div class="card-title">✨ Баффы</div><div id="activeBuffs" class="buff-active"></div></div>
+            </div>
+            <div id="bulkSellSubTab" class="sub-tab-content">
+                <div class="points">⭐ <span id="pointsAmountBulk">0</span></div>
+                <div class="card"><div class="card-title">💰 Авто-продажа</div><div id="bulkSellItems" class="shop-grid"></div></div>
+            </div>
+            <div id="autoRestSubTab" class="sub-tab-content">
+                <div class="points">⭐ <span id="pointsAmountRest">0</span></div>
+                <div class="card"><div class="card-title">💤 Авто-отдых</div><div id="autoRestItems" class="shop-grid"></div></div>
+            </div>
+            <div id="upgradesSubTab" class="sub-tab-content">
+                <div class="points">⭐ <span id="pointsAmount">0</span></div>
+                <div class="level-progress"><div>📊 УРОВЕНЬ <span id="playerLevel">1</span></div><div>Опыт: <span id="playerExp">0</span> / <span id="expToNext">150</span></div><div class="level-bar" id="expBar" style="width:0%"></div></div>
+                <div class="card"><div class="card-title">📈 Улучшения</div><div id="upgradeItems" class="upgrade-grid"></div></div>
+            </div>
+            <div id="challengesSubTab" class="sub-tab-content">
+                <div class="points">⭐ <span id="pointsAmount3">0</span></div>
+                <div class="card"><div class="card-title">🔥 Квесты</div><div id="challengeList" class="challenge-grid"></div></div>
+            </div>
+            <div id="codesSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title">🎁 Код</div><input type="text" id="codeInput" class="code-input" placeholder="Введите код..."><button id="submitCodeBtn" class="btn btn-primary" style="width:100%;padding:12px;font-size:16px;">Активировать</button><div id="codeResult" style="margin-top:15px;text-align:center;font-weight:900;font-size:20px;"></div></div>
+            </div>
         </div>
-    </div>
-    <div id="shopTab" class="tab-content">
-        <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-subtab="shopItems">🛍️ Товары</button>
-            <button class="sub-tab-btn" data-subtab="bulkSell">💰 Скупка</button>
-            <button class="sub-tab-btn" data-subtab="autoRest">💤 Автосон</button>
-            <button class="sub-tab-btn" data-subtab="upgrades">📈 Прокачка</button>
-            <button class="sub-tab-btn" data-subtab="challenges">🔥 Задачи</button>
-            <button class="sub-tab-btn" data-subtab="codes">🎁 Коды</button>
+        <div id="rebirthTab" class="tab-content">
+            <div class="sub-tabs">
+                <button class="sub-tab-btn active" data-subtab="rebirthMain">🔄 Перерождение</button>
+                <button class="sub-tab-btn" data-subtab="rebirthStats">📊 Статистика</button>
+            </div>
+            <div id="rebirthMainSubTab" class="sub-tab-content active">
+                <div class="card"><div class="card-title">🔄 Ребиртх (Престиж)</div><div id="rebirthInfo"></div><button id="doRebirthBtn" class="btn btn-primary" style="width:100%;margin-top:20px;padding:15px;font-size:16px;">🔄 Совершить Ребиртх!</button></div>
+            </div>
+            <div id="rebirthStatsSubTab" class="sub-tab-content">
+                <div class="card"><div class="card-title">📊 Статистика ребиртхов</div><div id="rebirthStatsList" style="display:flex;flex-direction:column;gap:10px;"></div></div>
+            </div>
         </div>
-        <div id="shopItemsSubTab" class="sub-tab-content active">
-            <div class="points">⭐ <span id="pointsAmount2">0</span></div>
-            <div class="free-spins"><div style="font-weight:900;font-size:16px;">🎰 <span id="freeSpinsCount">0</span> прокруток</div><button id="useFreeSpinBtn" class="btn btn-primary" style="margin-top:10px;width:100%;padding:10px;">🎲 Крутить</button></div>
-            <div class="shop-timer" id="shopTimer"></div>
-            <div class="card"><div class="card-title">🛍️ Товары <button class="btn" style="padding:4px 10px;font-size:11px;float:right;border-radius:20px;" onclick="refreshShopNow()">🔄 1000⭐</button></div><div id="shopItems" class="shop-grid"></div></div>
-            <div class="card"><div class="card-title">🗿 Артефакты <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:none;display:block;margin-top:4px;">(открываются после 4 ребиртха)</span></div><div id="artifactItems" class="shop-grid"></div></div>
-            <div class="card"><div class="card-title">🎲 Крутки</div><div class="shop-item"><div>Прокрутка</div><div><span class="shop-price">150⭐</span><button class="btn btn-primary" style="padding:6px 12px;" id="buySpinBtn">Купить</button></div></div></div>
-            <div class="card"><div class="card-title">✨ Баффы</div><div id="activeBuffs" class="buff-active"></div></div>
-        </div>
-        <div id="bulkSellSubTab" class="sub-tab-content">
-            <div class="points">⭐ <span id="pointsAmountBulk">0</span></div>
-            <div class="card"><div class="card-title">💰 Авто-продажа <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:none;display:block;">(нужен 1 ребиртх)</span></div><div id="bulkSellItems" class="shop-grid"></div></div>
-        </div>
-        <div id="autoRestSubTab" class="sub-tab-content">
-            <div class="points">⭐ <span id="pointsAmountRest">0</span></div>
-            <div class="card"><div class="card-title">💤 Авто-отдых <span style="font-size:11px;color:#aaa;font-weight:600;text-transform:none;display:block;">(нужно 3 ребиртха)</span></div><div id="autoRestItems" class="shop-grid"></div></div>
-        </div>
-        <div id="upgradesSubTab" class="sub-tab-content">
-            <div class="points">⭐ <span id="pointsAmount">0</span></div>
-            <div class="level-progress"><div style="font-size:18px;margin-bottom:5px;">📊 УРОВЕНЬ <span id="playerLevel">1</span></div><div style="font-size:13px;">Опыт: <span id="playerExp">0</span> / <span id="expToNext">150</span></div><div class="level-bar" id="expBar" style="width:0%"></div></div>
-            <div class="card"><div class="card-title">📈 Улучшения</div><div id="upgradeItems" class="upgrade-grid"></div></div>
-        </div>
-        <div id="challengesSubTab" class="sub-tab-content">
-            <div class="points">⭐ <span id="pointsAmount3">0</span></div>
-            <div class="card"><div class="card-title">🔥 Задания</div><div id="challengeList" class="challenge-grid"></div></div>
-        </div>
-        <div id="codesSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title">🎁 Код</div><input type="text" id="codeInput" class="code-input" placeholder="Введите код..."><button id="submitCodeBtn" class="btn btn-primary" style="width:100%;padding:12px;font-size:16px;">Активировать</button><div id="codeResult" style="margin-top:15px;text-align:center;font-weight:900;font-size:20px;"></div></div>
-        </div>
-    </div>
-    <div id="rebirthTab" class="tab-content">
-        <div class="sub-tabs">
-            <button class="sub-tab-btn active" data-subtab="rebirthMain">🔄 Перерождение</button>
-            <button class="sub-tab-btn" data-subtab="rebirthStats">📊 Статистика</button>
-        </div>
-        <div id="rebirthMainSubTab" class="sub-tab-content active">
-            <div class="card"><div class="card-title">🔄 Ребиртх (Престиж)</div><div id="rebirthInfo" style="line-height:1.6;font-weight:700;font-size:15px;"></div><button id="doRebirthBtn" class="btn btn-primary" style="width:100%;margin-top:20px;padding:15px;font-size:16px;">🔄 Совершить Ребиртх!</button></div>
-        </div>
-        <div id="rebirthStatsSubTab" class="sub-tab-content">
-            <div class="card"><div class="card-title">📊 Статистика ребиртхов</div><div id="rebirthStatsList" style="display:flex;flex-direction:column;gap:10px;"></div></div>
+        <div id="slotsTab" class="tab-content">
+            <div class="card"><div class="card-title">💾 Слоты сохранений</div><div id="slotsListInGame"></div></div>
         </div>
     </div>
 </div>
