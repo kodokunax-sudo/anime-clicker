@@ -170,6 +170,7 @@ function generateEnemy() { firstAttackThisFight = true; let el = document.getEle
 function showBossDialogue(msg) { let d = document.getElementById("bossDialogue"); if (d) { d.innerText = '«' + msg + '»'; d.style.display = "block"; } }
 function hideBossDialogue() { let d = document.getElementById("bossDialogue"); if (d) d.style.display = "none"; }
 
+// ========== ПОЩАДА БОССА (30% шанс, тройной урон при провале) ==========
 function spareBoss() {
     if (!currentEnemy || !currentEnemy.isBoss || currentEnemy.hp <= 0) return;
     if (currentEnemy.hp > currentEnemy.maxHp * 0.3) {
@@ -186,9 +187,12 @@ function spareBoss() {
                 myCards.push(rewardCard);
                 sfxCardObtain();
                 alert("🎉 Босс присоединился! Получена карта: " + bt.spareReward + " (шанс был " + Math.floor(spareChance*100) + "%)");
+                saveAll();
             }
         }
-        if (wave === 500) { checkEvolutionQuests(); }
+        if (bt && bt.isSpecial && wave === 500) { 
+            checkEvolutionQuests(); 
+        }
         currentEnemy.hp = 0;
         victory();
     } else {
@@ -203,7 +207,100 @@ function spareBoss() {
 }
 
 function createCardFromTemplate(tm, r) { let s = cardStats[r]; let d = tm.damage ?? s.damage, hp = tm.hp ?? s.hp, sp = tm.sellPrice ?? s.sellPrice; let n = tm.name, a = tm.ability || null, u = tm.universe || "?", uns = tm.unsellable || false; if (!discoveredCards.includes(n)) { discoveredCards.push(n); saveAll(); } totalCardsObtained++; if (points > maxPoints) maxPoints = points; return { id: Date.now() + Math.random() * 10000, name: n, rarity: r, damage: d, hp: hp, sellPrice: sp, ability: a, universe: u, unsellable: uns, minRebirth: tm.minRebirth || 0, statusAbility: tm.statusAbility || null, extraStatus: tm.extraStatus || null }; }
-function checkEvolutionQuests() { if (rebirthCount < 5) return; let tNames = team.map(idx => myCards[idx].name); if (wave === 500 && currentEnemy && currentEnemy.name === "Король Пиратов" && !evoProgress.luffyKingUnlocked) { evoProgress.luffyKingUnlocked = true; let template = customCardTemplates["Эволюционная"].find(t => t.name === "Луффи : Король пиратов"); if (template) { let c = createCardFromTemplate(template, "Эволюционная"); c.unsellable = true; myCards.push(c); alert("🧬 Эволюция: Луффи : Король пиратов!"); sfxRebirth(); } } if (tNames.includes("Сайтама") && tNames.includes("Бог Гароу") && !evoProgress.sgUnlocked) { evoProgress.wavesSaitamaGarou++; if (evoProgress.wavesSaitamaGarou >= 20000) { evoProgress.sgUnlocked = true; let template = customCardTemplates["Эволюционная"].find(t => t.name === "Сайтама/Гароу"); if (template) { let c = createCardFromTemplate(template, "Эволюционная"); c.unsellable = true; myCards.push(c); alert("🧬 Эволюция: Сайтама/Гароу!"); sfxRebirth(); } } } if (tNames.includes("Молодой Гарп") && tNames.includes("Кудзан") && !evoProgress.gkUnlocked) { evoProgress.damageGarpKuzan += (window.playerFinalDamage || 0); if (evoProgress.damageGarpKuzan >= 100000) { evoProgress.gkUnlocked = true; let template = customCardTemplates["Эволюционная"].find(t => t.name === "Гарп/Кудзан"); if (template) { let c = createCardFromTemplate(template, "Эволюционная"); c.unsellable = true; myCards.push(c); alert("🧬 Эволюция: Гарп/Кудзан!"); sfxRebirth(); } } } let sevenMembers = ["Королева Мэйв", "Хоумлендер", "Чёрный Нуар", "Ракета", "Штормфронт", "Звёздочка"]; if (tNames.length === 6 && sevenMembers.every(n => tNames.includes(n)) && !evoProgress.sevenUnlocked && playerLevel >= 20) { if (sevenMembers.every(n => hasCompoundV[n])) { evoProgress.sevenUnlocked = true; let template = customCardTemplates["Эволюционная"].find(t => t.name === "Семёрка"); if (template) { let c = createCardFromTemplate(template, "Эволюционная"); c.unsellable = true; myCards.push(c); alert("🧬 Эволюция: Семёрка!"); sfxRebirth(); } } } if (wave === 500 && currentEnemy && currentEnemy.name === "Омни-Мэн" && !evoProgress.williamUnlocked) { let allCommon = tNames.length === 6 && team.every(idx => myCards[idx]?.rarity === "Обычная"); if (allCommon) { evoProgress.williamUnlocked = true; let template = customCardTemplates["Эволюционная"].find(t => t.name === "Уильям Фрэнсис"); if (template) { let c = createCardFromTemplate(template, "Эволюционная"); c.unsellable = true; myCards.push(c); alert("🧬 Эволюция: Уильям Фрэнсис!"); sfxRebirth(); } } } renderEvoTab(); }
+
+// ========== ЭВОЛЮЦИОННЫЕ КВЕСТЫ (ИСПРАВЛЕНО) ==========
+function checkEvolutionQuests() { 
+    if (rebirthCount < 5) return; 
+    let tNames = team.map(idx => myCards[idx]?.name).filter(Boolean); 
+    
+    // Луффи : Король пиратов — нужны ВСЕ 5 Луффи в команде + пощадить Короля Пиратов на 500 волне
+    let luffyForms = ["Луффи", "Луффи (2 гир)", "Луффи (Таймскип)", "Луффи (4 гир)", "Луффи: Ника, Бог Солнца"];
+    if (wave === 500 && currentEnemy && currentEnemy.name === "Король Пиратов" && !evoProgress.luffyKingUnlocked) {
+        let hasAllLuffys = luffyForms.every(form => tNames.includes(form));
+        if (hasAllLuffys && currentEnemy.hp <= 0) {
+            evoProgress.luffyKingUnlocked = true; 
+            let template = customCardTemplates["Эволюционная"].find(t => t.name === "Луффи : Король пиратов"); 
+            if (template) { 
+                let c = createCardFromTemplate(template, "Эволюционная"); 
+                c.unsellable = true; 
+                myCards.push(c); 
+                alert("🧬 Эволюция: Луффи : Король пиратов!\n\nТы собрал всех Луффи и пощадил Короля Пиратов!"); 
+                sfxRebirth(); 
+                saveAll();
+            } 
+        }
+    }
+    
+    // Сайтама/Гароу
+    if (tNames.includes("Сайтама") && tNames.includes("Бог Гароу") && !evoProgress.sgUnlocked) { 
+        evoProgress.wavesSaitamaGarou++; 
+        if (evoProgress.wavesSaitamaGarou >= 20000) { 
+            evoProgress.sgUnlocked = true; 
+            let template = customCardTemplates["Эволюционная"].find(t => t.name === "Сайтама/Гароу"); 
+            if (template) { 
+                let c = createCardFromTemplate(template, "Эволюционная"); 
+                c.unsellable = true; 
+                myCards.push(c); 
+                alert("🧬 Эволюция: Сайтама/Гароу!"); 
+                sfxRebirth(); 
+                saveAll();
+            } 
+        } 
+    } 
+    
+    // Гарп/Кудзан
+    if (tNames.includes("Молодой Гарп") && tNames.includes("Кудзан") && !evoProgress.gkUnlocked) { 
+        evoProgress.damageGarpKuzan += (window.playerFinalDamage || 0); 
+        if (evoProgress.damageGarpKuzan >= 100000) { 
+            evoProgress.gkUnlocked = true; 
+            let template = customCardTemplates["Эволюционная"].find(t => t.name === "Гарп/Кудзан"); 
+            if (template) { 
+                let c = createCardFromTemplate(template, "Эволюционная"); 
+                c.unsellable = true; 
+                myCards.push(c); 
+                alert("🧬 Эволюция: Гарп/Кудзан!"); 
+                sfxRebirth(); 
+                saveAll();
+            } 
+        } 
+    } 
+    
+    // Семёрка — новый состав: Хоумлендер, Звёздочка, Мреющий, Ракета, Пучино, Королева Мэйв
+    let sevenMembersNew = ["Хоумлендер", "Звёздочка", "Мреющий", "Ракета", "Пучино", "Королева Мэйв"]; 
+    if (tNames.length >= 6 && sevenMembersNew.every(n => tNames.includes(n)) && !evoProgress.sevenUnlocked && playerLevel >= 20) { 
+        if (sevenMembersNew.every(n => hasCompoundV[n])) { 
+            evoProgress.sevenUnlocked = true; 
+            let template = customCardTemplates["Эволюционная"].find(t => t.name === "Семёрка"); 
+            if (template) { 
+                let c = createCardFromTemplate(template, "Эволюционная"); 
+                c.unsellable = true; 
+                myCards.push(c); 
+                alert("🧬 Эволюция: Семёрка!\n\nВся Семёрка с Препаратом V!"); 
+                sfxRebirth(); 
+                saveAll();
+            } 
+        } 
+    } 
+    
+    // Уильям Фрэнсис
+    if (wave === 500 && currentEnemy && currentEnemy.name === "Омни-Мэн" && !evoProgress.williamUnlocked) { 
+        let allCommon = tNames.length === 6 && team.every(idx => myCards[idx]?.rarity === "Обычная"); 
+        if (allCommon) { 
+            evoProgress.williamUnlocked = true; 
+            let template = customCardTemplates["Эволюционная"].find(t => t.name === "Уильям Фрэнсис"); 
+            if (template) { 
+                let c = createCardFromTemplate(template, "Эволюционная"); 
+                c.unsellable = true; 
+                myCards.push(c); 
+                alert("🧬 Эволюция: Уильям Фрэнсис!"); 
+                sfxRebirth(); 
+                saveAll();
+            } 
+        } 
+    } 
+    renderEvoTab(); 
+}
+
 function handleClick() { initAudio(); if (playerHp <= 0) { resetGame(); return; } if (!currentEnemy || currentEnemy.hp <= 0) return; if (deathNoteTarget && wave === deathNoteTarget && !skipUsed) { currentEnemy.hp = 0; skipUsed = true; deathNoteTarget = null; victory(); return; } totalClicks++; let now = Date.now(); let clickInterval = lastClickTime ? (now - lastClickTime) / 1000 : 999; lastClickTime = now; let fatigueMultiplier = 1; if (clickInterval < 0.1) { fatigueMultiplier = 3; } else if (clickInterval < 0.5) { comboCount++; } else { comboCount = 0; comboMultiplier = 1; } if (comboCount >= 50) comboMultiplier = 5; else if (comboCount >= 25) comboMultiplier = 3; else if (comboCount >= 10) comboMultiplier = 2; if (comboCount === 10) showFloatingText("⚡ КОМБО x2!", "#ffaa00"); if (comboCount === 25) showFloatingText("⚡ КОМБО x3!", "#ff8800"); if (comboCount === 50) showFloatingText("⚡ КОМБО x5!", "#ff4400"); if (firstAttackThisFight) { firstAttackThisFight = false; for (let idx of team) { let cd = myCards[idx]; if (cd?.ability) { let canWipe = cd.ability.type === 'oneShot' || cd.ability.type === 'instantWin' || cd.ability.type === 'erase'; let nonBossWipe = cd.ability.type === 'nonBossOneShot' && !currentEnemy.isBoss; if ((canWipe || nonBossWipe) && Math.random() < (cd.ability.chance || 0) * (1 + abilityUpgradeLevel * 0.1)) { currentEnemy.hp = 0; sfxAbility(); victory(); return; } } } if (enemyStatuses.poisonDamage > 0) { currentEnemy.hp -= enemyStatuses.poisonDamage; if (currentEnemy.hp <= 0) { victory(); return; } } } let dmg = window.playerFinalDamage || 1; let m = getPassiveModifiers(); if (currentEnemy.isBoss) dmg = Math.floor(dmg * (1 + m.bossBonus)); let cc = upgrades.crit.level * upgrades.crit.increment; team.forEach(idx => { let cd = myCards[idx]; if (cd?.ability?.type === 'critChance') cc += cd.ability.value * (1 + abilityUpgradeLevel * 0.1); if (cd?.ability?.type === 'damageMultChance' && Math.random() < cd.ability.chance) dmg = Math.floor(dmg * cd.ability.mult); }); dmg = Math.floor(dmg * comboMultiplier); if (Math.random() < cc) { dmg = Math.floor(dmg * 2); sfxCrit(); showFloatingText("💥 КРИТ! x2", "#feca57"); } else { sfxClick(); showFloatingText("-" + dmg, "#fff"); } dmg = Math.floor(dmg * enemyStatuses.bleedMult); checkEvolutionQuests(); if (enemyStatuses.fireTicks > 0 && enemyStatuses.fireDamage > 0) { startFireEffectPassive(enemyStatuses.fireDamage, enemyStatuses.fireTicks * 1000); enemyStatuses.fireTicks = 0; } currentEnemy.hp -= dmg; team.forEach(idx => { let cd = myCards[idx]; if (cd?.ability?.type === 'clickDmgSelf' && currentEnemy.hp > 0) { playerHp -= Math.floor(window.playerMaxHp * cd.ability.value); } }); if (playerHp <= 0) { defeat(); return; } if (currentEnemy.hp <= 0) { victory(); return; } clicksSinceLastCounter++; let maxClicks = Math.max(1, 3 - enemyStatuses.freezeStacks + enemyStatuses.blindStacks); if (clicksSinceLastCounter >= maxClicks) { playerHp -= Math.floor(currentEnemy.damage * m.takenMult); clicksSinceLastCounter = 0; if (playerHp <= 0) { defeat(); return; } } if (Math.random() < enemyStatuses.shockChance && clicksSinceLastCounter === maxClicks - 1) { clicksSinceLastCounter = 0; } increaseFatigue(fatigueMultiplier); renderEnemy(); let el = document.getElementById("playerHp"); if (el) el.innerText = Math.floor(playerHp); el = document.getElementById("clicksToCounter"); if (el) el.innerText = maxClicks - clicksSinceLastCounter; updateStatusDisplay(); window._needSave = true; }
 
 function victory() {
@@ -214,13 +311,11 @@ function victory() {
     totalWins++;
     addExp(isBoss ? 25 : 5);
     
-    // ВСЕГДА обновляем чекпоинт при победе над боссом на волне кратной 50
     if (isBoss && wave % 50 === 0) {
         highestCheckpoint = Math.max(highestCheckpoint, wave);
-        saveAll(); // СОХРАНЯЕМ СРАЗУ
+        saveAll();
     }
     
-    // Проверка на финальную волну
     if (wave >= 10000 && isBoss) {
         gameCompleted = true;
         saveAll();
@@ -305,9 +400,6 @@ function defeat() {
     if (defeatHistory.length > 10) defeatHistory.pop();
     sfxDefeat();
     
-    // ВАЖНО: НЕ СТИРАЕМ highestCheckpoint при смерти
-    // Он уже сохранён в victory() и остаётся в памяти
-    
     if (activeCheckpoint > 0 && activeCheckpoint <= highestCheckpoint) {
         wave = activeCheckpoint;
         playerHp = window.playerMaxHp || 100;
@@ -324,7 +416,6 @@ function defeat() {
         return;
     }
     
-    // Если нет активного чекпоинта, начинаем с 1 волны
     wave = 1;
     playerHp = window.playerMaxHp || 100;
     clicksSinceLastCounter = 0;
