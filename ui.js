@@ -38,4 +38,24 @@ function renderModerControls() {
         el.style.display = "none";
     }
 }
+function renderGlobalStats() {
+    let el = document.getElementById("globalStats");
+    if (!el) return;
+    el.innerHTML = '<div>👆 Всего кликов: <b>' + totalClicks + '</b></div>' +
+        '<div>🃏 Всего карт получено: <b>' + totalCardsObtained + '</b></div>' +
+        '<div>⭐ Максимум звёзд: <b>' + maxPoints + '</b></div>' +
+        '<div>🌊 Текущая волна: <b>' + wave + '</b></div>' +
+        '<div>💀 Всего поражений: <b>' + defeatHistory.length + '</b></div>' +
+        '<div>🏆 Всего побед: <b>' + totalWins + '</b></div>';
+}
+
+function renderModerControls() {
+    let el = document.getElementById("moderControls");
+    if (!el) return;
+    if (moderUnlocked && mode === "moder") {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+}
 function renderCheckpoints() { let c = document.getElementById("checkpointList"); let html = ''; let maxCp = Math.floor(wave / 50) * 50; for (let cp = 50; cp <= maxCp; cp += 50) { html += '<div class="checkpoint-item"><div>🚩 Волна ' + cp + '</div><button class="btn ' + (activeCheckpoint === cp ? 'auto-active' : '') + '" style="padding:6px 12px;" onclick="toggleCheckpoint(' + cp + ')">' + (activeCheckpoint === cp ? 'Выбрано ✅' : 'Выбрать ▶') + '</button></div>'; } c.innerHTML = html || "<div style='text-align:center;padding:15px;color:#888;font-weight:bold;'>Дойдите до 50 волны</div>"; }
