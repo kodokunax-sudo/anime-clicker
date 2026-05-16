@@ -29,4 +29,13 @@ function renderRebirthStats() {
     }
     c.innerHTML = rebirthStats.map(s => '<div class="shop-item"><div><b>Ребиртх ' + s.rebirth + '</b></div><div>🌊 Волна: ' + s.highestWave + '<br>🌍 Мир: ' + (s.world || 'Лес начала') + '<br>📊 Ур: ' + s.playerLevel + '<br>👆 Кликов: ' + (s.totalClicks || 0) + '<br>⭐ Макс. звёзд: ' + (s.maxPoints || 0) + '<br>🃏 Карт: ' + s.totalCards + '</div></div>').join('');
 }
+function renderModerControls() {
+    let el = document.getElementById("moderControls");
+    if (!el) return;
+    if (moderUnlocked && mode === "moder") {
+        el.style.display = "block";
+    } else {
+        el.style.display = "none";
+    }
+}
 function renderCheckpoints() { let c = document.getElementById("checkpointList"); let html = ''; let maxCp = Math.floor(wave / 50) * 50; for (let cp = 50; cp <= maxCp; cp += 50) { html += '<div class="checkpoint-item"><div>🚩 Волна ' + cp + '</div><button class="btn ' + (activeCheckpoint === cp ? 'auto-active' : '') + '" style="padding:6px 12px;" onclick="toggleCheckpoint(' + cp + ')">' + (activeCheckpoint === cp ? 'Выбрано ✅' : 'Выбрать ▶') + '</button></div>'; } c.innerHTML = html || "<div style='text-align:center;padding:15px;color:#888;font-weight:bold;'>Дойдите до 50 волны</div>"; }
