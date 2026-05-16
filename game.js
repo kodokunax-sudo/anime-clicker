@@ -99,14 +99,14 @@ function finishSlotLoad(slot) {
 }
 
 function loadGameData(d) {
-    myCards = d.myCards || []; team = d.team || []; afkTeam = d.afkTeam || []; points = d.points || 100; wave = d.wave || 1; playerHp = d.playerHp || 100; activeBuffs = d.activeBuffs || {}; mode = d.mode || "normal"; defeatHistory = d.defeatHistory || []; shopItems = d.shopItems || [null, null, null]; freeSpins = d.freeSpins ?? 5; fatigue = d.fatigue || 0; achievements = d.achievements || achievements; totalWins = d.totalWins || 0; playerLevel = d.playerLevel || 1; playerExp = d.playerExp || 0; if (d.upgrades) { for (let k in upgrades) { if (d.upgrades[k]) upgrades[k] = d.upgrades[k]; } } discoveredCards = d.discoveredCards || []; hasSukunaFingers = d.hasSukunaFingers || false; deathNoteTarget = d.deathNoteTarget; skipUsed = d.skipUsed || false; hasFireArtifact = d.hasFireArtifact || false; hasCompoundV = d.hasCompoundV || {}; usedCodes = d.usedCodes || []; moderUnlocked = d.moderUnlocked || false; afkWavesCompleted = d.afkWavesCompleted || 0; highestCheckpoint = d.highestCheckpoint || 1; rebirthCount = d.rebirthCount || 0; rebirthStats = d.rebirthStats || []; activeCheckpoint = d.activeCheckpoint || 0; autoSellSettings = d.autoSellSettings || {}; purchasedAutoSell = d.purchasedAutoSell || {}; autoRest = d.autoRest || {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = d.abilityUpgradeLevel || 0; if (d.evoProgress) evoProgress = d.evoProgress; dekusNerfWaves = d.dekusNerfWaves || 0; newcomerBonus = d.newcomerBonus || false; newcomerBonusEnd = d.newcomerBonusEnd || 0; totalClicks = d.totalClicks || 0; totalCardsObtained = d.totalCardsObtained || 0; maxPoints = d.maxPoints || points; slotData.nickname = d.nickname || loadSlotMeta(currentSlot).nickname;
+    myCards = d.myCards || []; team = d.team || []; afkTeam = d.afkTeam || []; points = d.points || 100; wave = d.wave || 1; playerHp = d.playerHp || 100; activeBuffs = d.activeBuffs || {}; mode = d.mode || "normal"; defeatHistory = d.defeatHistory || []; shopItems = d.shopItems || [null, null, null]; freeSpins = d.freeSpins ?? 5; fatigue = d.fatigue || 0; achievements = d.achievements || achievements; totalWins = d.totalWins || 0; playerLevel = d.playerLevel || 1; playerExp = d.playerExp || 0; if (d.upgrades) { for (let k in upgrades) { if (d.upgrades[k]) upgrades[k] = d.upgrades[k]; } } discoveredCards = d.discoveredCards || []; hasSukunaFingers = d.hasSukunaFingers || false; deathNoteTarget = d.deathNoteTarget; skipUsed = d.skipUsed || false; hasFireArtifact = d.hasFireArtifact || false; hasCompoundV = d.hasCompoundV || {}; usedCodes = d.usedCodes || []; moderUnlocked = d.moderUnlocked || false; afkWavesCompleted = d.afkWavesCompleted || 0; highestCheckpoint = d.highestCheckpoint || 1; rebirthCount = d.rebirthCount || 0; rebirthStats = d.rebirthStats || []; activeCheckpoint = d.activeCheckpoint || 0; autoSellSettings = d.autoSellSettings || {}; purchasedAutoSell = d.purchasedAutoSell || {}; autoRest = d.autoRest || {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = d.abilityUpgradeLevel || 0; if (d.evoProgress) evoProgress = d.evoProgress; dekusNerfWaves = d.dekusNerfWaves || 0; newcomerBonus = d.newcomerBonus || false; newcomerBonusEnd = d.newcomerBonusEnd || 0; totalClicks = d.totalClicks || 0; totalCardsObtained = d.totalCardsObtained || 0; maxPoints = d.maxPoints || points; gameCompleted = d.gameCompleted || false; slotData.nickname = d.nickname || loadSlotMeta(currentSlot).nickname;
 }
 
 function initNewGame() {
-    myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; activeBuffs = {}; mode = "normal"; defeatHistory = []; shopItems = [null, null, null]; freeSpins = 5; fatigue = 0; achievements = {win10:false,win50:false,win100:false,win500:false,legendaryTeam:false,secretTeam:false,level20:false,level50:false}; totalWins = 0; playerLevel = 1; playerExp = 0; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила удара",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит. шанс",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Сопр. усталости",reqLevel:10},abilityPower:{level:0,baseCost:200,increment:0.1,name:"✨ Усиление спос.",reqLevel:30}}; discoveredCards = []; hasSukunaFingers = false; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; usedCodes = []; moderUnlocked = false; afkWavesCompleted = 0; highestCheckpoint = 1; rebirthCount = 0; rebirthStats = []; activeCheckpoint = 0; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = 0; evoProgress = {wavesSaitamaGarou:0,damageGarpKuzan:0,luffyKingUnlocked:false,sgUnlocked:false,gkUnlocked:false,sevenUnlocked:false,williamUnlocked:false}; dekusNerfWaves = 0; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; totalClicks = 0; totalCardsObtained = 0; maxPoints = 100; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2];
+    myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; activeBuffs = {}; mode = "normal"; defeatHistory = []; shopItems = [null, null, null]; freeSpins = 5; fatigue = 0; achievements = {win10:false,win50:false,win100:false,win500:false,legendaryTeam:false,secretTeam:false,level20:false,level50:false}; totalWins = 0; playerLevel = 1; playerExp = 0; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила удара",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит. шанс",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Сопр. усталости",reqLevel:10},abilityPower:{level:0,baseCost:200,increment:0.1,name:"✨ Усиление спос.",reqLevel:30}}; discoveredCards = []; hasSukunaFingers = false; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; usedCodes = []; moderUnlocked = false; afkWavesCompleted = 0; highestCheckpoint = 1; rebirthCount = 0; rebirthStats = []; activeCheckpoint = 0; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; abilityUpgradeLevel = 0; evoProgress = {wavesSaitamaGarou:0,damageGarpKuzan:0,luffyKingUnlocked:false,sgUnlocked:false,gkUnlocked:false,sevenUnlocked:false,williamUnlocked:false}; dekusNerfWaves = 0; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; totalClicks = 0; totalCardsObtained = 0; maxPoints = 100; gameCompleted = false; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2];
 }
 
-function saveAll() { if (currentSlot < 0) return; slotData.myCards = myCards; slotData.team = team; slotData.afkTeam = afkTeam; slotData.points = points; slotData.wave = wave; slotData.playerHp = playerHp; slotData.activeBuffs = activeBuffs; slotData.mode = mode; slotData.defeatHistory = defeatHistory; slotData.shopItems = shopItems; slotData.upgrades = upgrades; slotData.freeSpins = freeSpins; slotData.fatigue = fatigue; slotData.achievements = achievements; slotData.totalWins = totalWins; slotData.playerLevel = playerLevel; slotData.playerExp = playerExp; slotData.discoveredCards = discoveredCards; slotData.hasSukunaFingers = hasSukunaFingers; slotData.deathNoteTarget = deathNoteTarget; slotData.skipUsed = skipUsed; slotData.hasFireArtifact = hasFireArtifact; slotData.hasCompoundV = hasCompoundV; slotData.usedCodes = usedCodes; slotData.moderUnlocked = moderUnlocked; slotData.afkWavesCompleted = afkWavesCompleted; slotData.highestCheckpoint = highestCheckpoint; slotData.rebirthCount = rebirthCount; slotData.rebirthStats = rebirthStats; slotData.activeCheckpoint = activeCheckpoint; slotData.autoSellSettings = autoSellSettings; slotData.purchasedAutoSell = purchasedAutoSell; slotData.autoRest = autoRest; slotData.abilityUpgradeLevel = abilityUpgradeLevel; slotData.evoProgress = evoProgress; slotData.dekusNerfWaves = dekusNerfWaves; slotData.newcomerBonus = newcomerBonus; slotData.newcomerBonusEnd = newcomerBonusEnd; slotData.totalClicks = totalClicks; slotData.totalCardsObtained = totalCardsObtained; slotData.maxPoints = maxPoints; slotData.nickname = slotData.nickname || loadSlotMeta(currentSlot).nickname; saveGameToSlot(currentSlot); window._needSave = false; }
+function saveAll() { if (currentSlot < 0) return; slotData.myCards = myCards; slotData.team = team; slotData.afkTeam = afkTeam; slotData.points = points; slotData.wave = wave; slotData.playerHp = playerHp; slotData.activeBuffs = activeBuffs; slotData.mode = mode; slotData.defeatHistory = defeatHistory; slotData.shopItems = shopItems; slotData.upgrades = upgrades; slotData.freeSpins = freeSpins; slotData.fatigue = fatigue; slotData.achievements = achievements; slotData.totalWins = totalWins; slotData.playerLevel = playerLevel; slotData.playerExp = playerExp; slotData.discoveredCards = discoveredCards; slotData.hasSukunaFingers = hasSukunaFingers; slotData.deathNoteTarget = deathNoteTarget; slotData.skipUsed = skipUsed; slotData.hasFireArtifact = hasFireArtifact; slotData.hasCompoundV = hasCompoundV; slotData.usedCodes = usedCodes; slotData.moderUnlocked = moderUnlocked; slotData.afkWavesCompleted = afkWavesCompleted; slotData.highestCheckpoint = highestCheckpoint; slotData.rebirthCount = rebirthCount; slotData.rebirthStats = rebirthStats; slotData.activeCheckpoint = activeCheckpoint; slotData.autoSellSettings = autoSellSettings; slotData.purchasedAutoSell = purchasedAutoSell; slotData.autoRest = autoRest; slotData.abilityUpgradeLevel = abilityUpgradeLevel; slotData.evoProgress = evoProgress; slotData.dekusNerfWaves = dekusNerfWaves; slotData.newcomerBonus = newcomerBonus; slotData.newcomerBonusEnd = newcomerBonusEnd; slotData.totalClicks = totalClicks; slotData.totalCardsObtained = totalCardsObtained; slotData.maxPoints = maxPoints; slotData.gameCompleted = gameCompleted; slotData.nickname = slotData.nickname || loadSlotMeta(currentSlot).nickname; saveGameToSlot(currentSlot); window._needSave = false; }
 
 // ========== ИГРОВЫЕ ПЕРЕМЕННЫЕ ==========
 let myCards=[],team=[],afkTeam=[],points=100,wave=1,playerHp=100,currentEnemy=null,clicksSinceLastCounter=0,activeBuffs={},defeatHistory=[],mode="normal",shopItems=[null,null,null],shopRefreshTime=null,lastCardClaimTime=null,freeSpins=5,lastFreeSpinReset=null,fatigue=0,achievements={win10:false,win50:false,win100:false,win500:false,legendaryTeam:false,secretTeam:false,level20:false,level50:false},totalWins=0,playerLevel=1,playerExp=0,resurrectedThisFight=false,firstAttackThisFight=true,hasSukunaFingers=false,deathNoteTarget=null,afkActive=false,afkTimer=null,afkWavesCompleted=0,afkCurrentWave=1,usedCodes=[],moderUnlocked=false,discoveredCards=[],highestCheckpoint=1;
@@ -122,6 +122,7 @@ let newcomerBonus = false, newcomerBonusEnd = 0;
 let fireInterval = null;
 let spareBonusFromTeam = 0;
 let totalClicks = 0, totalCardsObtained = 0, maxPoints = 100;
+let gameCompleted = false;
 window._needSave = false;
 
 // ========== МУЗЫКА ==========
@@ -169,7 +170,6 @@ function generateEnemy() { firstAttackThisFight = true; let el = document.getEle
 function showBossDialogue(msg) { let d = document.getElementById("bossDialogue"); if (d) { d.innerText = '«' + msg + '»'; d.style.display = "block"; } }
 function hideBossDialogue() { let d = document.getElementById("bossDialogue"); if (d) d.style.display = "none"; }
 
-// ========== НОВАЯ ФУНКЦИЯ ПОЩАДЫ БОССА ==========
 function spareBoss() {
     if (!currentEnemy || !currentEnemy.isBoss || currentEnemy.hp <= 0) return;
     if (currentEnemy.hp > currentEnemy.maxHp * 0.3) {
@@ -178,21 +178,14 @@ function spareBoss() {
     }
     let spareChance = 0.30 + spareBonusFromTeam;
     if (Math.random() < spareChance) {
-        // Ищем ближайшего босса для получения карты
-        let bossWaves = Object.keys(bossTemplates).map(Number).sort((a,b) => a-b);
-        let nearestBoss = bossWaves.find(bw => bw <= wave);
-        if (nearestBoss) {
-            let bt = bossTemplates[nearestBoss];
-            if (bt.spareReward) {
-                let template = customCardTemplates["Босс"].find(t => t.name === bt.spareReward);
-                if (template) {
-                    let rewardCard = createCardFromTemplate(template, "Босс");
-                    myCards.push(rewardCard);
-                    sfxCardObtain();
-                    alert("🎉 Босс присоединился! Получена карта: " + bt.spareReward + " (шанс был " + Math.floor(spareChance*100) + "%)");
-                }
-            } else {
-                alert("🤝 Босс пощажён, но не присоединился.");
+        let bt = bossTemplates[wave];
+        if (bt && bt.spareReward) {
+            let template = customCardTemplates["Босс"].find(t => t.name === bt.spareReward);
+            if (template) {
+                let rewardCard = createCardFromTemplate(template, "Босс");
+                myCards.push(rewardCard);
+                sfxCardObtain();
+                alert("🎉 Босс присоединился! Получена карта: " + bt.spareReward + " (шанс был " + Math.floor(spareChance*100) + "%)");
             }
         }
         if (wave === 500) { checkEvolutionQuests(); }
@@ -221,6 +214,19 @@ function victory() {
     totalWins++;
     addExp(isBoss ? 25 : 5);
     
+    // ВСЕГДА обновляем чекпоинт при победе над боссом на волне кратной 50
+    if (isBoss && wave % 50 === 0) {
+        highestCheckpoint = Math.max(highestCheckpoint, wave);
+        saveAll(); // СОХРАНЯЕМ СРАЗУ
+    }
+    
+    // Проверка на финальную волну
+    if (wave >= 10000 && isBoss) {
+        gameCompleted = true;
+        saveAll();
+        alert("🏆 ПОЗДРАВЛЯЕМ! Вы победили финального босса на 10000 волне!\n\nИгра пройдена! Но вы можете продолжать играть бесконечно.\n\nВсе ваши чекпоинты сохранены.");
+    }
+    
     if (isBoss) {
         let rarity = getBossRewardRarity(wave);
         if (rarity !== "Босс") {
@@ -229,14 +235,13 @@ function victory() {
         }
         renderMyCards();
         
-        if (wave % 50 === 0) {
-            highestCheckpoint = Math.max(highestCheckpoint, wave);
-        }
-        
         let hasZeno = team.some(idx => myCards[idx]?.ability?.type === 'zenoCheckpoint');
         if (hasZeno && Math.random() < 0.10) {
             let nextCp = Math.floor(wave / 50) * 50 + 50;
-            if (nextCp > highestCheckpoint) highestCheckpoint = nextCp;
+            if (nextCp > highestCheckpoint) {
+                highestCheckpoint = nextCp;
+                saveAll();
+            }
             showFloatingText("🌀 ЗЕНО: чекпоинт " + nextCp + "!", "#9b59b6");
         }
         sfxVictory();
@@ -252,7 +257,7 @@ function victory() {
     }
     
     enemyStatuses.poisonDamage = 0;
-    wave++;
+    if (!gameCompleted || wave < 10000) wave++;
     if (dekusNerfWaves > 0) dekusNerfWaves--;
     increaseFatigue();
     playerHp = Math.min(window.playerMaxHp, playerHp + Math.floor(window.playerMaxHp * 0.2));
@@ -300,9 +305,8 @@ function defeat() {
     if (defeatHistory.length > 10) defeatHistory.pop();
     sfxDefeat();
     
-    if (wave > highestCheckpoint) {
-        highestCheckpoint = Math.max(1, Math.floor(wave / 50) * 50);
-    }
+    // ВАЖНО: НЕ СТИРАЕМ highestCheckpoint при смерти
+    // Он уже сохранён в victory() и остаётся в памяти
     
     if (activeCheckpoint > 0 && activeCheckpoint <= highestCheckpoint) {
         wave = activeCheckpoint;
@@ -320,6 +324,7 @@ function defeat() {
         return;
     }
     
+    // Если нет активного чекпоинта, начинаем с 1 волны
     wave = 1;
     playerHp = window.playerMaxHp || 100;
     clicksSinceLastCounter = 0;
@@ -358,7 +363,6 @@ function purchaseAutoRest(th) { if (rebirthCount < 3) return; let cost = getAuto
 function toggleAutoRest(th) { if (!autoRest.purchased || autoRest.threshold !== th) return; autoRest.active = !autoRest.active; saveAll(); renderAutoRest(); }
 window.buyUpgrade = function (k) { if (!isUpgradeUnlocked(k)) return; let u = upgrades[k], c = Math.floor(u.baseCost * (1 + u.level * 0.3)); if (points < c) return; points -= c; u.level++; saveAll(); renderUpgrades(); renderPoints(); updatePlayerStats(); };
 
-// ========== МОДЕР ФУНКЦИИ ==========
 function goToWave() {
     if (mode !== "moder" || !moderUnlocked) return;
     let w = parseInt(prompt("Введите номер волны:"));
@@ -398,10 +402,10 @@ function submitCode() {
 function genChallenges() { let t = [{ name: "10 боссов", target: 10, reward: Math.floor(500 * getStarMult()), type: "bossKills", progress: 0 }, { name: "1000⭐", target: 1000, reward: Math.floor(300 * getStarMult()), type: "earnPoints", progress: 0 }, { name: "50 побед", target: 50, reward: Math.floor(400 * getStarMult()), type: "wins", progress: 0 }, { name: "10к урон", target: 10000, reward: Math.floor(350 * getStarMult()), type: "bigDamage", progress: 0 }, { name: "10 ур.", target: 10, reward: Math.floor(800 * getStarMult()), type: "levelUp", progress: playerLevel }]; challenges = []; for (let i = 0; i < 3; i++) { let tp = t[Math.floor(Math.random() * t.length)]; challenges.push({ ...tp, id: Date.now() + i, completed: false }); } lastChallengeReset = Date.now(); saveAll(); renderChallenges(); }
 function updateChallengeProgress(tp, v) { challenges.forEach(ch => { if (!ch.completed && ch.type === tp) { ch.progress = (ch.progress || 0) + v; if (ch.type === "levelUp") ch.progress = playerLevel; if (ch.progress >= ch.target) { ch.completed = true; points += ch.reward; if (points > maxPoints) maxPoints = points; } } }); renderChallenges(); saveAll(); }
 function getRebirthRequirement() { return 75 + rebirthCount * 75 + Math.floor(Math.pow(rebirthCount, 1.5)) * 10; }
-function doRebirth() { let req = getRebirthRequirement(); if (highestCheckpoint < req) { alert('Нужно ' + req + ' волн!'); return; } rebirthStats.push({ rebirth: rebirthCount, totalWins, highestWave: highestCheckpoint, totalCards: myCards.length, playerLevel, world: getWorldForWave(highestCheckpoint).name, totalClicks, maxPoints }); myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; playerLevel = 1; playerExp = 0; fatigue = 0; activeBuffs = {}; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Усталость",reqLevel:10},abilityPower:{level:abilityUpgradeLevel,baseCost:200,increment:0.1,name:"✨ Усиление",reqLevel:30}}; rebirthCount++; highestCheckpoint = 1; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2]; sfxRebirth(); refreshShop(); generateEnemy(); saveAll(); renderAll(); alert('Ребиртх ' + rebirthCount + '! Множитель x' + getRebirthMult().toFixed(1)); }
+function doRebirth() { let req = getRebirthRequirement(); if (highestCheckpoint < req) { alert('Нужно ' + req + ' волн!'); return; } rebirthStats.push({ rebirth: rebirthCount, totalWins, highestWave: highestCheckpoint, totalCards: myCards.length, playerLevel, world: getWorldForWave(highestCheckpoint).name, totalClicks, maxPoints }); myCards = []; team = []; afkTeam = []; points = 100; wave = 1; playerHp = 100; playerLevel = 1; playerExp = 0; fatigue = 0; activeBuffs = {}; deathNoteTarget = null; skipUsed = false; hasFireArtifact = false; hasCompoundV = {}; autoSellSettings = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; purchasedAutoSell = {"Обычная":false,"Редкая":false,"Сверх редкая":false,"Эпик":false,"Мифическая":false,"Легендарная":false}; autoRest = {active:false,threshold:90,purchased:false}; upgrades = {damage:{level:0,baseCost:25,increment:2,name:"💪 Сила",reqLevel:1},hp:{level:0,baseCost:25,increment:5,name:"❤️ Живучесть",reqLevel:1},luck:{level:0,baseCost:30,increment:0.1,name:"🍀 Удача",reqLevel:3},crit:{level:0,baseCost:40,increment:0.03,name:"⚡ Крит",reqLevel:5},fatigueResist:{level:0,baseCost:50,increment:0.5,name:"💪 Усталость",reqLevel:10},abilityPower:{level:abilityUpgradeLevel,baseCost:200,increment:0.1,name:"✨ Усиление",reqLevel:30}}; rebirthCount++; highestCheckpoint = 1; newcomerBonus = true; newcomerBonusEnd = Date.now() + 600000; gameCompleted = false; for (let i = 0; i < 3; i++) { let c = createCard(getRandomRarity()); if (c) myCards.push(c); } team = [0, 1, 2]; sfxRebirth(); refreshShop(); generateEnemy(); saveAll(); renderAll(); alert('Ребиртх ' + rebirthCount + '! Множитель x' + getRebirthMult().toFixed(1)); }
 function switchTab(tabName) { document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active")); let btn = document.querySelector(".tab-btn[data-tab='" + tabName + "']"); if (btn) btn.classList.add("active"); document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active")); let tab = document.getElementById(tabName + "Tab"); if (tab) tab.classList.add("active"); if (tabName === "shop") renderShop(); if (tabName === "rebirth") { renderRebirthInfo(); renderRebirthStats(); } if (tabName === "slots") { renderSlotsInGame(); } }
 function switchSubTab(subtabName, parentTabId) { let parent = document.getElementById(parentTabId); if (!parent) return; parent.querySelectorAll(".sub-tab-btn").forEach(b => b.classList.remove("active")); let subBtn = parent.querySelector(".sub-tab-btn[data-subtab='" + subtabName + "']"); if (subBtn) subBtn.classList.add("active"); parent.querySelectorAll(".sub-tab-content").forEach(t => t.classList.remove("active")); let sub = document.getElementById(subtabName + "SubTab"); if (sub) sub.classList.add("active"); if (subtabName === "book") renderBook(); if (subtabName === "evolution") renderEvoTab(); if (subtabName === "shopItems") renderShop(); if (subtabName === "bulkSell") renderBulkSell(); if (subtabName === "autoRest") renderAutoRest(); if (subtabName === "upgrades") renderUpgrades(); if (subtabName === "challenges") renderChallenges(); if (subtabName === "checkpoint") renderCheckpoints(); if (subtabName === "rebirthMain") renderRebirthInfo(); if (subtabName === "rebirthStats") renderRebirthStats(); }
-function renderAll() { renderMyCards(); renderTeam(); renderAfkTeam(); renderEnemy(); renderPoints(); renderShop(); renderUpgrades(); renderActiveBuffs(); renderDefeatHistory(); renderFreeSpins(); renderAchievements(); renderChallenges(); renderBook(); renderCheckpoints(); renderRebirthInfo(); renderRebirthStats(); renderEvoTab(); updatePlayerStats(); updateStatusDisplay(); }
+function renderAll() { renderMyCards(); renderTeam(); renderAfkTeam(); renderEnemy(); renderPoints(); renderShop(); renderUpgrades(); renderActiveBuffs(); renderDefeatHistory(); renderFreeSpins(); renderAchievements(); renderChallenges(); renderBook(); renderCheckpoints(); renderRebirthInfo(); renderRebirthStats(); renderEvoTab(); renderGlobalStats(); renderModerControls(); updatePlayerStats(); updateStatusDisplay(); }
 function renderPoints() { ['pointsAmount', 'pointsAmount2', 'pointsAmount3', 'pointsAmountBulk', 'pointsAmountRest'].forEach(id => { let e = document.getElementById(id); if (e) e.innerText = points; }); }
 function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])) : ''; }
 
@@ -428,7 +432,6 @@ function showNicknamePrompt(slot) {
     selectSlot(slot);
 }
 
-// ========== ПЕРЕИМЕНОВАНИЕ СЛОТА В МЕНЮ ==========
 function renameSlot(slot) {
     let meta = loadSlotMeta(slot);
     let nickname = prompt("Новое имя для слота " + (slot + 1) + ":", meta.nickname);
@@ -476,7 +479,7 @@ function switchToSlot(slot) {
     finishSlotLoad(slot);
     renderSlotsInGame();
 }
-function setMode(m) { if (m === "moder" && !moderUnlocked) return; mode = m; saveAll(); updateClaimTimer(); document.querySelectorAll(".toggle span").forEach(s => s.classList.toggle("active", s.dataset.mode === m)); }
+function setMode(m) { if (m === "moder" && !moderUnlocked) return; mode = m; saveAll(); updateClaimTimer(); renderModerControls(); document.querySelectorAll(".toggle span").forEach(s => s.classList.toggle("active", s.dataset.mode === m)); }
 
 document.addEventListener("DOMContentLoaded", function () {
     let lastSlot = parseInt(localStorage.getItem("cgV20_lastSlot") || "-1");
