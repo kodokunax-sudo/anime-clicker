@@ -43,9 +43,17 @@ function selectSlot(slot) {
 }
 
 function finishSlotLoad(slot) {
-    document.getElementById("slotSelectScreen").style.display = "none";
-    document.getElementById("gameScreen").style.display = "block";
-    document.getElementById("nicknameDisplay").innerText = slotData.nickname || loadSlotMeta(slot).nickname;
+    let el;
+    
+    el = document.getElementById("slotSelectScreen");
+    if (el) el.style.display = "none";
+    
+    el = document.getElementById("gameScreen");
+    if (el) el.style.display = "block";
+    
+    el = document.getElementById("nicknameDisplay");
+    if (el) el.innerText = slotData.nickname || loadSlotMeta(slot).nickname;
+    
     localStorage.setItem("cgV20_lastSlot", slot);
     
     team = team.filter(i => myCards[i]);
@@ -66,20 +74,28 @@ function finishSlotLoad(slot) {
     setMode(mode);
     
     // Безопасная установка значений с проверкой элементов
-    let waveEl = document.getElementById("waveNumber");
-    if (waveEl) waveEl.innerText = wave;
+    el = document.getElementById("waveNumber");
+    if (el) el.innerText = wave;
     
-    let afkWaveEl = document.getElementById("afkWave");
-    if (afkWaveEl) afkWaveEl.innerText = wave;
+    el = document.getElementById("afkWave");
+    if (el) el.innerText = wave;
     
-    let hpEl = document.getElementById("playerHp");
-    if (hpEl) hpEl.innerText = Math.floor(playerHp);
+    el = document.getElementById("playerHp");
+    if (el) el.innerText = Math.floor(playerHp);
     
-    let playerDamageEl = document.getElementById("playerDamage");
-    if (playerDamageEl) playerDamageEl.innerText = window.playerFinalDamage || 0;
+    el = document.getElementById("playerDamage");
+    if (el) el.innerText = window.playerFinalDamage || 0;
     
-    let playerMaxHpEl = document.getElementById("playerMaxHp");
-    if (playerMaxHpEl) playerMaxHpEl.innerText = window.playerMaxHp || 100;
+    el = document.getElementById("playerMaxHp");
+    if (el) el.innerText = window.playerMaxHp || 100;
+    
+    el = document.getElementById("clicksToCounter");
+    if (el) el.innerText = Math.max(1, 3 - enemyStatuses.freezeStacks + enemyStatuses.blindStacks);
+    
+    el = document.getElementById("rewardPreview");
+    if (el && currentEnemy) {
+        el.innerText = currentEnemy.isBoss ? Math.floor(wave / 2 * getStarMult()) : Math.floor(wave / 3 * getStarMult());
+    }
     
     if (afkActive) stopAfk();
 }
@@ -147,8 +163,8 @@ function applyStatusEffects() { let eff = getStatusEffects(); enemyStatuses.blee
 function getPassiveModifiers() { let dm = 1.0, tm = 1.0, bb = 0, hm = 1.0, sb = 0; let ab = 1 + abilityUpgradeLevel * upgrades.abilityPower.increment; let dupes = countTeamDuplicates(); let dupMult = {}; for (let name in dupes) { if (dupes[name] >= 3) dupMult[name] = Math.floor(dupes[name] / 2); else dupMult[name] = 1; } team.forEach(idx => { let cd = myCards[idx]; if (!cd) return; let mult = dupMult[cd.name] || 1; let a = cd.ability; if (a) { if (a.type === 'damageAura') dm += a.value * ab * mult; if (a.type === 'bossDamage') bb += a.value * ab * mult; if (a.type === 'damageReduction') tm -= a.value * ab * mult; if (a.type === 'hpBuff') hm += a.value * ab * mult; if (a.type === 'bossSupport' && currentEnemy?.isBoss) { fatigue = Math.max(0, fatigue - 50); bb += 0.15 * ab * mult; } if (a.type === 'bossDoubleSelf' && currentEnemy?.isBoss) dm += 1.0 * ab * mult; if (a.type === 'bossDouble' && currentEnemy?.isBoss) dm += 1.0 * ab * mult; if (a.type === 'sevenSpecial') { tm -= (a.damageReduction || 0.10) * ab * mult; } if (a.type === 'bossDamage' && a.bossReduction && currentEnemy?.isBoss) tm -= a.bossReduction * ab * mult; if (a.type === 'bossDamage' && a.damageReduction && !currentEnemy?.isBoss) tm -= a.damageReduction * ab * mult; if (a.type === 'damageAura' && a.damageTakenMod) tm += a.damageTakenMod * ab * mult; if (a.type === 'dmgTakenIncrease') tm += a.value * ab * mult; if (a.type === 'spareChanceBonus') { sb += a.value * ab; } if (a.type === 'zenoCheckpoint') { window.hasZenoInTeam = true; } } if (cd.statusAbility?.type === 'absoluteFreeze') tm -= cd.statusAbility.value * ab * mult; if (cd.statusAbility?.type === 'bossDamageAura' && currentEnemy?.isBoss) bb += cd.statusAbility.value * ab * mult; }); if (dekusNerfWaves > 0) dm -= 0.30; if (hasSukunaFingers) { if (playerLevel < 30) dm *= 0.1; else dm += 0.5; } dm *= getRebirthMult(); spareBonusFromTeam = sb; return { dmgMult: dm, takenMult: Math.max(0.01, tm), bossBonus: bb, hpMult: hm }; }
 function updatePlayerStats() { let m = getPassiveModifiers(); let fm = 1 - fatigue / 100; let base = 5 + upgrades.damage.level * upgrades.damage.increment; let total = (base + (window.teamDamage || 0)) * fm; let db = 1.0; if (activeBuffs["doubleDamage"] && activeBuffs["doubleDamage"] > Date.now()) db = 2.0; else if (activeBuffs["dmg13"] && activeBuffs["dmg13"] > Date.now()) db = 1.3; else if (activeBuffs["dmg15"] && activeBuffs["dmg15"] > Date.now()) db = 1.5; else if (activeBuffs["quadDamage"] && activeBuffs["quadDamage"] > Date.now()) db = 4.0; let fd = Math.floor(total * m.dmgMult * db); let el = document.getElementById("playerDamage"); if (el) el.innerText = fd; window.playerFinalDamage = fd; let baseHp = 50 + upgrades.hp.level * upgrades.hp.increment; let totalHp = (baseHp + (window.teamHpBonus || 0)) * fm * m.hpMult; if (hasSukunaFingers && playerLevel >= 30) totalHp *= 1.4; let hb = 1.0; if (activeBuffs["doubleHp"] && activeBuffs["doubleHp"] > Date.now()) hb = 2.0; else if (activeBuffs["tripleHp"] && activeBuffs["tripleHp"] > Date.now()) hb = 3.0; let maxHp = Math.floor(totalHp * hb); if (playerHp > maxHp) playerHp = maxHp; el = document.getElementById("playerHp"); if (el) el.innerText = Math.floor(playerHp); el = document.getElementById("playerMaxHp"); if (el) el.innerText = maxHp; window.playerMaxHp = maxHp; }
 function showFloatingText(text, color) { const area = document.getElementById('clickArea'); if (!area) return; const el = document.createElement('div'); el.className = 'floating-text'; el.textContent = text; el.style.color = color; el.style.left = Math.random() * 60 + 20 + '%'; el.style.top = '50%'; area.appendChild(el); setTimeout(() => el.remove(), 1000); }
-function showModal(title, content) { document.getElementById("modalContent").innerHTML = '<h2>' + title + '</h2><p style="margin-top:10px;white-space:pre-line;">' + content + '</p><button class="btn btn-primary" style="width:100%;padding:12px;" onclick="closeModal()">Закрыть</button>'; document.getElementById("modalOverlay").style.display = "flex"; }
-function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
+function showModal(title, content) { let el = document.getElementById("modalContent"); if (el) el.innerHTML = '<h2>' + title + '</h2><p style="margin-top:10px;white-space:pre-line;">' + content + '</p><button class="btn btn-primary" style="width:100%;padding:12px;" onclick="closeModal()">Закрыть</button>'; el = document.getElementById("modalOverlay"); if (el) el.style.display = "flex"; }
+function closeModal() { let el = document.getElementById("modalOverlay"); if (el) el.style.display = "none"; }
 function startFireEffectPassive(damage, durationMs) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } let elapsed = 0; fireInterval = setInterval(() => { if (!currentEnemy || currentEnemy.hp <= 0) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } return; } currentEnemy.hp -= damage; showFloatingText("🔥 -" + damage, "#ff6b6b"); renderEnemy(); elapsed += 2000; if (elapsed >= durationMs || currentEnemy.hp <= 0) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } if (currentEnemy && currentEnemy.hp <= 0) victory(); } }, 2000); }
 function generateEnemy() { firstAttackThisFight = true; let el = document.getElementById("spareBtn"); if (el) el.style.display = "none"; el = document.getElementById("dialogBox"); if (el) el.style.display = "none"; currentDialog = null; let world = getCurrentWorld(); let isBoss = wave % 10 === 0, isUnique = bossTemplates[wave]; let hp, dmg, name, dialogue = "", enemyStat = null; if (isUnique) { let bt = bossTemplates[wave]; hp = Math.floor((50 + wave * 12) * bt.hpMult); dmg = Math.floor((15 + wave * 6) * bt.dmgMult); name = bt.name; dialogue = bt.dialogue || ""; if (bt.enemyStatus) enemyStat = bt.enemyStatus; showBossDialogue(dialogue); sfxBossAppear(); if (wave === 10000) currentDialog = finalBossResponses; } else if (isBoss) { hp = Math.floor((50 + wave * 12) * 4); dmg = Math.floor((15 + wave * 6) * 3); name = "👑 БОСС"; hideBossDialogue(); } else { hp = 50 + wave * 12; dmg = 15 + wave * 6; name = enemyNames[Math.floor(Math.random() * enemyNames.length)]; let randomStat = enemyStatusPool[Math.floor(Math.random() * enemyStatusPool.length)]; if (randomStat) enemyStat = randomStat; hideBossDialogue(); } enemyStatuses = { fireTicks:0, fireDamage:0, poisonDamage:0, bleedMult:1.0, freezeStacks:0, shockChance:0, blindStacks:0 }; if (enemyStat) { if (enemyStat.type === "freezeStacks") enemyStatuses.freezeStacks = enemyStat.value; if (enemyStat.type === "bleed") enemyStatuses.bleedMult = 1 + enemyStat.value; if (enemyStat.type === "shock") enemyStatuses.shockChance = enemyStat.chance; } applyStatusEffects(); currentEnemy = { name, hp, maxHp:hp, damage:dmg, isBoss:isBoss||isUnique }; startWorldMusic(world.name); renderEnemy(); updateStatusDisplay(); updateEnemyStatusDisplay(); }
 function showBossDialogue(msg) { let d = document.getElementById("bossDialogue"); if (d) { d.innerText = '«' + msg + '»'; d.style.display = "block"; } }
@@ -173,7 +189,6 @@ function victory() {
         }
         renderMyCards();
         
-        // Обновляем чекпоинт только при победе над боссом на волне кратной 50
         if (wave % 50 === 0) {
             highestCheckpoint = Math.max(highestCheckpoint, wave);
         }
@@ -244,7 +259,6 @@ function defeat() {
     if (defeatHistory.length > 10) defeatHistory.pop();
     sfxDefeat();
     
-    // Сохраняем highestCheckpoint перед восстановлением
     if (wave > highestCheckpoint) {
         highestCheckpoint = Math.max(1, Math.floor(wave / 50) * 50);
     }
@@ -290,7 +304,7 @@ function refreshShop() { for (let i = 0; i < 3; i++) shopItems[i] = genShopItem(
 function refreshShopNow() { if (points < 1000) return; points -= 1000; refreshShop(); renderPoints(); }
 function stackBuff(buffId, duration) { if (activeBuffs[buffId] && activeBuffs[buffId] > Date.now()) { activeBuffs[buffId] += duration; } else { activeBuffs[buffId] = Date.now() + duration; } saveAll(); renderActiveBuffs(); }
 window.buyShopItem = function (i) { let it = shopItems[i]; if (!it || points < it.cost) return; points -= it.cost; if (it.type === "card") { let c = createCard(it.rarity); if (!c) return; myCards.push(c); renderMyCards(); sfxCardObtain(); } else if (it.type === "buff") { stackBuff(it.buffId, it.duration); } shopItems[i] = null; saveAll(); renderShop(); renderPoints(); renderActiveBuffs(); updatePlayerStats(); };
-function showCompoundVModal() { if (rebirthCount < 4 || points < 5000) return; let html = '<h2>💉 Выберите героя</h2><div style="max-height:300px;overflow-y:auto;">'; if (!team.length) { html += '<p style="color:#888;">Нет героев в команде.</p>'; } else { team.forEach((idx, s) => { let cd = myCards[idx]; if (!cd) return; let hasV = hasCompoundV[cd.name] || false; html += '<div class="team-select-item ' + (hasV ? 'disabled' : '') + '" onclick="' + (hasV ? '' : 'applyCompoundV(\'' + cd.name.replace(/'/g, "\\'") + '\')') + '"><span>' + escapeHtml(cd.name) + '</span><span>' + (hasV ? '✅ Куплен' : '▶ Выбрать') + '</span></div>'; }); } html += '</div><button class="btn" style="width:100%;margin-top:10px;background:#e74c3c;" onclick="closeModal()">Отмена</button>'; document.getElementById("modalContent").innerHTML = html; document.getElementById("modalOverlay").style.display = "flex"; }
+function showCompoundVModal() { if (rebirthCount < 4 || points < 5000) return; let html = '<h2>💉 Выберите героя</h2><div style="max-height:300px;overflow-y:auto;">'; if (!team.length) { html += '<p style="color:#888;">Нет героев в команде.</p>'; } else { team.forEach((idx, s) => { let cd = myCards[idx]; if (!cd) return; let hasV = hasCompoundV[cd.name] || false; html += '<div class="team-select-item ' + (hasV ? 'disabled' : '') + '" onclick="' + (hasV ? '' : 'applyCompoundV(\'' + cd.name.replace(/'/g, "\\'") + '\')') + '"><span>' + escapeHtml(cd.name) + '</span><span>' + (hasV ? '✅ Куплен' : '▶ Выбрать') + '</span></div>'; }); } html += '</div><button class="btn" style="width:100%;margin-top:10px;background:#e74c3c;" onclick="closeModal()">Отмена</button>'; let el = document.getElementById("modalContent"); if (el) el.innerHTML = html; el = document.getElementById("modalOverlay"); if (el) el.style.display = "flex"; }
 function applyCompoundV(name) { if (points < 5000) return; if (hasCompoundV[name]) return; points -= 5000; hasCompoundV[name] = true; saveAll(); renderAll(); updatePlayerStats(); closeModal(); }
 window.buySukuna = function () { if (rebirthCount < 4 || points < 15000) return; points -= 15000; hasSukunaFingers = true; saveAll(); renderShop(); renderPoints(); updatePlayerStats(); };
 window.buyDeathNote = function () { if (rebirthCount < 4 || points < 500000) return; let v = parseInt(document.getElementById("dnInput").value); if (!v || v < 1) return; points -= 500000; deathNoteTarget = v; skipUsed = false; saveAll(); renderShop(); renderPoints(); };
@@ -314,14 +328,17 @@ function renderPoints() { ['pointsAmount', 'pointsAmount2', 'pointsAmount3', 'po
 function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])) : ''; }
 
 function showSlotSelectScreen() {
-    document.getElementById("slotSelectScreen").style.display = "block";
-    document.getElementById("gameScreen").style.display = "none";
+    let el = document.getElementById("slotSelectScreen");
+    if (el) el.style.display = "block";
+    el = document.getElementById("gameScreen");
+    if (el) el.style.display = "none";
     let html = '';
     for (let i = 0; i < 3; i++) {
         let meta = loadSlotMeta(i);
         html += '<div class="slot-select" onclick="showNicknamePrompt(' + i + ')"><div style="font-size:20px;font-weight:900;">' + meta.nickname + '</div><div style="font-size:12px;color:#aaa;">' + (meta.exists ? 'Есть сохранение' : 'Пустой слот') + '</div></div>';
     }
-    document.getElementById("slotList").innerHTML = html;
+    el = document.getElementById("slotList");
+    if (el) el.innerHTML = html;
 }
 function showNicknamePrompt(slot) {
     let meta = loadSlotMeta(slot);
@@ -356,9 +373,10 @@ function switchToSlot(slot) {
     }
     slotData.nickname = slotData.nickname || meta.nickname;
     saveGameToSlot(slot);
-    // Убеждаемся что видим экран игры
-    document.getElementById("slotSelectScreen").style.display = "none";
-    document.getElementById("gameScreen").style.display = "block";
+    let el = document.getElementById("slotSelectScreen");
+    if (el) el.style.display = "none";
+    el = document.getElementById("gameScreen");
+    if (el) el.style.display = "block";
     finishSlotLoad(slot);
     renderSlotsInGame();
 }
@@ -382,19 +400,29 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         showSlotSelectScreen();
     }
-    document.getElementById("clickArea").addEventListener("click", function() {
+    let clickArea = document.getElementById("clickArea");
+    if (clickArea) clickArea.addEventListener("click", function() {
         if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         handleClick();
     });
-    document.getElementById("clearTeamBtn").addEventListener("click", function () { team = []; saveAll(); renderAll(); updatePlayerStats(); });
-    document.getElementById("clearAfkTeamBtn").addEventListener("click", function () { afkTeam = []; saveAll(); renderAll(); });
-    document.getElementById("useFreeSpinBtn").addEventListener("click", useFreeSpin);
-    document.getElementById("buySpinBtn").addEventListener("click", buySpin);
-    document.getElementById("claimCardBtn").addEventListener("click", claimCardByTimer);
-    document.getElementById("restBtn").addEventListener("click", rest);
-    document.getElementById("toggleAfkBtn").addEventListener("click", function () { afkActive ? stopAfk() : startAfk(); });
-    document.getElementById("submitCodeBtn").addEventListener("click", submitCode);
-    document.getElementById("doRebirthBtn").addEventListener("click", doRebirth);
+    let clearTeamBtn = document.getElementById("clearTeamBtn");
+    if (clearTeamBtn) clearTeamBtn.addEventListener("click", function () { team = []; saveAll(); renderAll(); updatePlayerStats(); });
+    let clearAfkTeamBtn = document.getElementById("clearAfkTeamBtn");
+    if (clearAfkTeamBtn) clearAfkTeamBtn.addEventListener("click", function () { afkTeam = []; saveAll(); renderAll(); });
+    let useFreeSpinBtn = document.getElementById("useFreeSpinBtn");
+    if (useFreeSpinBtn) useFreeSpinBtn.addEventListener("click", useFreeSpin);
+    let buySpinBtn = document.getElementById("buySpinBtn");
+    if (buySpinBtn) buySpinBtn.addEventListener("click", buySpin);
+    let claimCardBtn = document.getElementById("claimCardBtn");
+    if (claimCardBtn) claimCardBtn.addEventListener("click", claimCardByTimer);
+    let restBtn = document.getElementById("restBtn");
+    if (restBtn) restBtn.addEventListener("click", rest);
+    let toggleAfkBtn = document.getElementById("toggleAfkBtn");
+    if (toggleAfkBtn) toggleAfkBtn.addEventListener("click", function () { afkActive ? stopAfk() : startAfk(); });
+    let submitCodeBtn = document.getElementById("submitCodeBtn");
+    if (submitCodeBtn) submitCodeBtn.addEventListener("click", submitCode);
+    let doRebirthBtn = document.getElementById("doRebirthBtn");
+    if (doRebirthBtn) doRebirthBtn.addEventListener("click", doRebirth);
     document.querySelectorAll(".tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { switchTab(this.dataset.tab); }); });
     document.querySelectorAll(".sub-tab-btn").forEach(function (btn) { btn.addEventListener("click", function () { var parent = this.parentElement; while (parent && !parent.classList.contains("tab-content")) { parent = parent.parentElement; } if (!parent) return; switchSubTab(this.dataset.subtab, parent.id); }); });
     document.querySelectorAll(".toggle span").forEach(function (s) { s.addEventListener("click", function () { setMode(this.dataset.mode); }); });
