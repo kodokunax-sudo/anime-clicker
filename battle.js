@@ -152,7 +152,7 @@ function startAttackPhase() {
         let attempts = 0;
         do {
             x = 55 + Math.random() * 290;
-            y = 600 + Math.random() * 330;
+            y = 400 + Math.random() * 330;
             tooClose = false;
             for (let p of usedPositions) {
                 let dx = x - p.x, dy = y - p.y;
@@ -209,17 +209,17 @@ function spawnAttack() {
         if (type === 0) {
             // Слева направо
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: -40 - i*60, y: 70 + i*90, size: 28, speed: 3 });
+                attacks.push({ type: "square", x: -40 - i*60, y: 700 + i*90, size: 28, speed: 3 });
             }
         } else if (type === 1) {
             // Справа налево
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: 440 + i*60, y: 50 + i*95, size: 28, speed: -3 });
+                attacks.push({ type: "square", x: 440 + i*60, y: 500 + i*95, size: 28, speed: -3 });
             }
         } else {
             // Сверху вниз (по центру)
             for (let i = 0; i < 6; i++) {
-                attacks.push({ type: "square", x: 40 + i*65, y: -40, size: 26, speed: 2.5 });
+                attacks.push({ type: "square", x: 40 + i*65, y: -400, size: 26, speed: 2.5 });
             }
         }
     } else {
