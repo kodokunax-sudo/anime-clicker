@@ -12,6 +12,12 @@ function sfxLevelUp() { playSound(1000, 'square', 0.1); setTimeout(() => playSou
 function sfxAbility() { playSound(400, 'sawtooth', 0.15); }
 function sfxRebirth() { playSound(300, 'triangle', 0.3); }
 
+// ========== МУЗЫКАЛЬНЫЕ ТЕМЫ (АУДИОФАЙЛЫ) ==========
+// Файлы должны быть в папке music/ :
+// music/main.mp3 - основная музыка (меню, коллекция, слоты, ребиртх)
+// music/battle.mp3 - музыка битвы
+// music/shop.mp3 - музыка магазина
+
 // ========== МИРЫ ==========
 const worlds = [
     { name: "Лес начала и конца", minWave: 1, maxWave: 300, color: "#2ecc71" },
@@ -182,4 +188,3 @@ const bulkSellOptions = [{ name: "Обычные", rarity: "Обычная" }, {
 const autoRestOptions = [{ name: "90%", threshold: 90 }, { name: "80%", threshold: 80 }, { name: "70%", threshold: 70 }, { name: "60%", threshold: 60 }, { name: "50%", threshold: 50 }, { name: "40%", threshold: 40 }, { name: "35%", threshold: 35 }, { name: "30%", threshold: 30 }, { name: "25%", threshold: 25 }, { name: "20%", threshold: 20 }, { name: "15%", threshold: 15 }, { name: "10%", threshold: 10 }, { name: "5%", threshold: 5 }, { name: "1%", threshold: 1 }];
 const codeList = { "PELMESHKA": { type: "card", rarity: "Пасхалка", tpl: "Пельмешка", points: 1000 }, "Хочу Звезды": { type: "points", amount: 500 }, "Сила": { type: "buff", buffId: "dmg13", duration: 86400000 }, "789456123": { type: "moderUnlock" } };
 const worldMusicNotes = {};
-};
