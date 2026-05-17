@@ -65,9 +65,9 @@ window._needSave = false;
 let mainMusic = null, battleMusic = null, shopMusic = null, currentMusic = null;
 function initMusic() {
     if (mainMusic) return;
-    mainMusic = new Audio("main.mp3"); mainMusic.loop = true; mainMusic.volume = 0.4;
-    battleMusic = new Audio("battle.mp3"); battleMusic.loop = true; battleMusic.volume = 0.4;
-    shopMusic = new Audio("shop.mp3"); shopMusic.loop = true; shopMusic.volume = 0.4;
+    mainMusic = new Audio("menu/main.mp3"); mainMusic.loop = true; mainMusic.volume = 0.4;
+    battleMusic = new Audio("menu/battle.mp3"); battleMusic.loop = true; battleMusic.volume = 0.4;
+    shopMusic = new Audio("menu/shop.mp3"); shopMusic.loop = true; shopMusic.volume = 0.4;
 }
 function stopAllMusic() { if (mainMusic) { mainMusic.pause(); mainMusic.currentTime = 0; } if (battleMusic) { battleMusic.pause(); battleMusic.currentTime = 0; } if (shopMusic) { shopMusic.pause(); shopMusic.currentTime = 0; } currentMusic = null; }
 function startMainMusic() { if (!musicEnabled) return; if (!mainMusic) initMusic(); if (currentMusic === mainMusic) return; stopAllMusic(); currentMusic = mainMusic; if (mainMusic) mainMusic.play().catch(e => {}); }
