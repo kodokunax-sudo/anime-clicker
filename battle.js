@@ -1,5 +1,6 @@
-// ========== АРЕНА UNDERTALE v6 — ДИНАМИЧНЫЙ ХАРДКОР ==========
+// ========== АРЕНА UNDERTALE v7 — ПАУЗА, ВЫХОД, УЛУЧШЕННАЯ ГРАФИКА ==========
 let arenaActive = false;
+let arenaPaused = false;
 let arenaBoss = null;
 let arenaHP = 30;
 let arenaMaxHP = 30;
@@ -19,14 +20,27 @@ let ctx = null;
 let arenaParticles = [];
 let arenaShake = 0;
 let arenaHitFlash = 0;
+let arenaBgStars = [];
+let arenaBgTime = 0;
 
 function initArena() {
     canvas = document.getElementById("arenaCanvas");
     if (!canvas) return;
     ctx = canvas.getContext("2d");
     
+    // Генерируем звёзды для фона
+    for (let i = 0; i < 80; i++) {
+        arenaBgStars.push({
+            x: Math.random() * 400,
+            y: Math.random() * 500,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 0.5 + 0.1,
+            twinkle: Math.random() * Math.PI * 2
+        });
+    }
+    
     canvas.addEventListener("mousemove", (e) => {
-        if (!arenaActive || arenaPhase !== "dodge") return;
+        if (!arenaActive || arenaPaused || arenaPhase !== "dodge") return;
         let rect = canvas.getBoundingClientRect();
         heart.x = e.clientX - rect.left;
         heart.y = e.clientY - rect.top;
@@ -35,7 +49,7 @@ function initArena() {
     });
     
     canvas.addEventListener("touchmove", (e) => {
-        if (!arenaActive || arenaPhase !== "dodge") return;
+        if (!arenaActive || arenaPaused || arenaPhase !== "dodge") return;
         e.preventDefault();
         let rect = canvas.getBoundingClientRect();
         heart.x = e.touches[0].clientX - rect.left;
@@ -45,7 +59,7 @@ function initArena() {
     });
     
     canvas.addEventListener("click", (e) => {
-        if (!arenaActive) return;
+        if (!arenaActive || arenaPaused) return;
         if (arenaPhase === "attack") {
             let rect = canvas.getBoundingClientRect();
             let mx = e.clientX - rect.left;
@@ -55,7 +69,7 @@ function initArena() {
     });
     
     canvas.addEventListener("touchstart", (e) => {
-        if (!arenaActive) return;
+        if (!arenaActive || arenaPaused) return;
         e.preventDefault();
         if (arenaPhase === "attack") {
             let rect = canvas.getBoundingClientRect();
@@ -79,12 +93,11 @@ function checkClickTarget(mx, my) {
         if (Math.sqrt(dx*dx + dy*dy) < t.radius && !t.hit) {
             t.hit = true;
             arenaClicksHit++;
-            // Частицы при попадании
-            for (let j = 0; j < 8; j++) {
+            for (let j = 0; j < 12; j++) {
                 arenaParticles.push({
                     x: t.x, y: t.y,
-                    vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6,
-                    life: 20, color: "#0f0"
+                    vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8,
+                    life: 25, color: "#0f0", size: Math.random()*4+2
                 });
             }
             break;
@@ -102,8 +115,29 @@ function calculateArenaHP() {
     arenaHP = arenaMaxHP;
 }
 
+// ПАУЗА
+function toggleArenaPause() {
+    arenaPaused = !arenaPaused;
+    let btn = document.getElementById("arenaPauseBtn");
+    if (btn) btn.innerText = arenaPaused ? "▶ Продолжить" : "⏸ Пауза";
+    let pauseOverlay = document.getElementById("arenaPauseOverlay");
+    if (pauseOverlay) pauseOverlay.style.display = arenaPaused ? "flex" : "none";
+}
+
+// ВЫХОД ИЗ БОЯ
+function exitArena() {
+    if (confirm("⚠️ Выйти из боя? Вы потеряете 30 HP!")) {
+        stopArena();
+        playerHp = Math.max(1, playerHp - 30);
+        alert("Вы сбежали с боя! Потеряно 30 HP.");
+        updatePlayerStats();
+        renderEnemy();
+    }
+}
+
 function startArena(bossWave) {
     arenaActive = true;
+    arenaPaused = false;
     calculateArenaHP();
     arenaClickTargets = [];
     arenaClicksHit = 0;
@@ -118,13 +152,17 @@ function startArena(bossWave) {
     arenaBoss = bt ? bt.name : "БОСС";
     arenaBossMaxHP = bt ? Math.floor((50 + bossWave * 12) * bt.hpMult) : 1000;
     
-    // Рандомный тип атаки
     arenaAttackType = Math.random() < 0.5 ? 0 : 1;
     
     document.getElementById("arenaOverlay").style.display = "flex";
     document.getElementById("arenaBossName").innerText = arenaBoss;
     document.getElementById("arenaHP").innerText = arenaHP;
     document.getElementById("arenaTimer").innerText = "∞";
+    
+    let pauseOverlay = document.getElementById("arenaPauseOverlay");
+    if (pauseOverlay) pauseOverlay.style.display = "none";
+    let pauseBtn = document.getElementById("arenaPauseBtn");
+    if (pauseBtn) pauseBtn.innerText = "⏸ Пауза";
     
     if (!ctx) initArena();
     startDodgePhase();
@@ -136,15 +174,15 @@ function startDodgePhase() {
     attacks = [];
     heart.x = 200; heart.y = 400;
     let typeText = arenaAttackType === 0 ? "⬜ ОБЫЧНЫЕ" : "🔷 ХАОС";
-    document.getElementById("arenaBossName").innerText = arenaBoss + " — " + typeText + " — УКЛОНЯЙСЯ!";
+    document.getElementById("arenaBossName").innerText = arenaBoss + " — " + typeText;
     if (arenaAttackInterval) clearInterval(arenaAttackInterval);
     let intervalTime = arenaAttackType === 0 ? 600 : 500;
     arenaAttackInterval = setInterval(() => {
-        if (arenaPhase === "dodge" && arenaActive) spawnAttack();
+        if (arenaPhase === "dodge" && arenaActive && !arenaPaused) spawnAttack();
     }, intervalTime);
     let dodgeTime = 8000 + Math.random() * 6000;
     setTimeout(() => {
-        if (arenaPhase === "dodge" && arenaActive) startAttackPhase();
+        if (arenaPhase === "dodge" && arenaActive && !arenaPaused) startAttackPhase();
     }, dodgeTime);
 }
 
@@ -171,12 +209,14 @@ function startAttackPhase() {
             attempts++;
         } while (tooClose && attempts < 50);
         usedPositions.push({x, y});
-        arenaClickTargets.push({ x, y, radius: 24, hit: false, pulse: 0 });
+        arenaClickTargets.push({ x, y, radius: 24, hit: false, pulse: Math.random()*Math.PI*2 });
     }
     
     let attackTimer = setInterval(() => {
-        arenaAttackTimeLeft--;
-        document.getElementById("arenaBossName").innerText = arenaBoss + " — ⚡ БЕЙ! (" + arenaAttackTimeLeft + "с)";
+        if (!arenaPaused) {
+            arenaAttackTimeLeft--;
+            document.getElementById("arenaBossName").innerText = arenaBoss + " — ⚡ БЕЙ! (" + arenaAttackTimeLeft + "с)";
+        }
         if (arenaAttackTimeLeft <= 0) { clearInterval(attackTimer); applyArenaDamage(); }
     }, 1000);
     
@@ -197,12 +237,12 @@ function applyArenaDamage() {
     
     if (finalDmg > 0) {
         arenaBossMaxHP -= finalDmg;
-        arenaShake = 15;
-        for (let i = 0; i < 20; i++) {
+        arenaShake = 20;
+        for (let i = 0; i < 30; i++) {
             arenaParticles.push({
                 x: 200, y: 250,
-                vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
-                life: 30, color: Math.random() < 0.5 ? "#ff0" : "#f00"
+                vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12,
+                life: 35, color: Math.random() < 0.5 ? "#ff0" : "#f80", size: Math.random()*5+2
             });
         }
         document.getElementById("arenaBossName").innerText = arenaBoss + " — 💥 -" + finalDmg + "!";
@@ -212,36 +252,33 @@ function applyArenaDamage() {
     
     setTimeout(() => {
         if (arenaBossMaxHP <= 0) { winArena(); return; }
-        // МЕНЯЕМ ТИП АТАКИ ПОСЛЕ КАЖДОГО УДАРА
         arenaAttackType = Math.random() < 0.5 ? 0 : 1;
         arenaPhase = "dodge";
         startDodgePhase();
-    }, 1000);
+    }, 1200);
 }
 
 function spawnAttack() {
     if (arenaAttackType === 0) {
-        // БЕЛЫЕ — предсказуемые ряды со всех сторон
         let type = Math.floor(Math.random() * 4);
         if (type === 0) {
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: -50 - i*75, y: 60 + i*85, size: 26, speed: 3.5, speedX: null, speedY: null, glow: 0 });
+                attacks.push({ type: "square", x: -50 - i*75, y: 60 + i*85, size: 28, speed: 3.5, speedX: null, speedY: null, glow: Math.random()*Math.PI*2 });
             }
         } else if (type === 1) {
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: 450 + i*75, y: 80 + i*80, size: 26, speed: -3.5, speedX: null, speedY: null, glow: 0 });
+                attacks.push({ type: "square", x: 450 + i*75, y: 80 + i*80, size: 28, speed: -3.5, speedX: null, speedY: null, glow: Math.random()*Math.PI*2 });
             }
         } else if (type === 2) {
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: 30 + i*85, y: -40, size: 26, speed: null, speedX: 0, speedY: 3, glow: 0 });
+                attacks.push({ type: "square", x: 30 + i*85, y: -40, size: 28, speed: null, speedX: 0, speedY: 3, glow: Math.random()*Math.PI*2 });
             }
         } else {
             for (let i = 0; i < 5; i++) {
-                attacks.push({ type: "square", x: 50 + i*80, y: 540, size: 26, speed: null, speedX: 0, speedY: -3, glow: 0 });
+                attacks.push({ type: "square", x: 50 + i*80, y: 540, size: 28, speed: null, speedX: 0, speedY: -3, glow: Math.random()*Math.PI*2 });
             }
         }
     } else {
-        // СИНИЕ — меньше но быстрее, хаотичные (4-6 штук)
         let count = 3 + Math.floor(Math.random() * 3);
         for (let i = 0; i < count; i++) {
             let side = Math.floor(Math.random() * 4);
@@ -259,11 +296,14 @@ function spawnAttack() {
 
 function stopArena() {
     arenaActive = false;
+    arenaPaused = false;
     if (arenaInterval) clearInterval(arenaInterval);
     if (arenaAttackInterval) clearInterval(arenaAttackInterval);
     arenaInterval = null; arenaAttackInterval = null;
     attacks = []; arenaClickTargets = []; arenaParticles = [];
     document.getElementById("arenaOverlay").style.display = "none";
+    let pauseOverlay = document.getElementById("arenaPauseOverlay");
+    if (pauseOverlay) pauseOverlay.style.display = "none";
 }
 
 function winArena() {
@@ -282,30 +322,39 @@ function loseArena() {
 function renderArena() {
     if (!arenaActive || !ctx) return;
     
-    // Тряска
     let sx = arenaShake ? (Math.random()-0.5)*arenaShake : 0;
     let sy = arenaShake ? (Math.random()-0.5)*arenaShake : 0;
     if (arenaShake > 0) arenaShake *= 0.85;
     if (arenaHitFlash > 0) arenaHitFlash--;
+    arenaBgTime += 0.016;
     
     ctx.save();
     ctx.translate(sx, sy);
     
     ctx.clearRect(-10, -10, 420, 520);
     
-    // Фон с сеткой
-    ctx.fillStyle = "#0a0a1a";
+    // Фон с градиентом
+    let bgGrad = ctx.createRadialGradient(200, 250, 50, 200, 250, 400);
+    bgGrad.addColorStop(0, "#1a1a3e");
+    bgGrad.addColorStop(1, "#050510");
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, 400, 500);
-    ctx.strokeStyle = "rgba(255,255,255,0.03)";
-    ctx.lineWidth = 1;
-    for (let gx = 0; gx < 400; gx += 40) { ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, 500); ctx.stroke(); }
-    for (let gy = 0; gy < 500; gy += 40) { ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(400, gy); ctx.stroke(); }
+    
+    // Звёзды
+    arenaBgStars.forEach(star => {
+        star.twinkle += star.speed * 0.05;
+        let alpha = 0.3 + Math.sin(star.twinkle) * 0.4;
+        ctx.fillStyle = "rgba(255,255,255," + alpha + ")";
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI*2);
+        ctx.fill();
+    });
     
     // Рамка
     let borderColor = arenaPhase === "attack" ? "#ffdd00" : (arenaAttackType === 0 ? "#ffffff" : "#4499ff");
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 4;
-    ctx.shadowBlur = 15; ctx.shadowColor = borderColor;
+    ctx.shadowBlur = 20; ctx.shadowColor = borderColor;
     ctx.strokeRect(2, 2, 396, 496);
     ctx.shadowBlur = 0;
     
@@ -316,26 +365,32 @@ function renderArena() {
     }
     
     // HP игрока
-    ctx.fillStyle = "#333"; ctx.fillRect(10, 8, 380, 10);
-    let hpGrad = ctx.createLinearGradient(10, 0, 390, 0);
-    hpGrad.addColorStop(0, "#ff0000"); hpGrad.addColorStop(0.5, "#ff8800"); hpGrad.addColorStop(1, "#00ff00");
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, 8, 384, 28);
+    ctx.fillStyle = "#400"; ctx.fillRect(12, 12, 376, 8);
+    let hpGrad = ctx.createLinearGradient(12, 0, 388, 0);
+    hpGrad.addColorStop(0, "#ff0000"); hpGrad.addColorStop(0.3, "#ff8800"); hpGrad.addColorStop(0.6, "#ffff00"); hpGrad.addColorStop(1, "#00ff00");
     ctx.fillStyle = hpGrad;
-    ctx.fillRect(10, 8, 380 * (arenaHP / arenaMaxHP), 10);
-    ctx.fillStyle = "#fff"; ctx.font = "bold 10px Nunito, sans-serif";
-    ctx.fillText("❤️ " + arenaHP + "/" + arenaMaxHP, 10, 30);
+    ctx.fillRect(12, 12, 376 * (arenaHP / arenaMaxHP), 8);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 11px Nunito, sans-serif";
+    ctx.fillText("❤️ " + arenaHP + "/" + arenaMaxHP, 14, 32);
     
     // HP босса
-    ctx.fillStyle = "#333"; ctx.fillRect(10, 38, 380, 6);
+    ctx.fillStyle = "rgba(0,0,0,0.6)"; ctx.fillRect(8, 40, 384, 16);
+    ctx.fillStyle = "#400"; ctx.fillRect(12, 44, 376, 4);
     let maxHp = currentEnemy ? currentEnemy.maxHp : 1000;
-    ctx.fillStyle = "#ff0";
-    ctx.fillRect(10, 38, 380 * Math.max(0, arenaBossMaxHP / maxHp), 6);
+    let bossGrad = ctx.createLinearGradient(12, 0, 388, 0);
+    bossGrad.addColorStop(0, "#ff0000"); bossGrad.addColorStop(1, "#ff8800");
+    ctx.fillStyle = bossGrad;
+    ctx.fillRect(12, 44, 376 * Math.max(0, arenaBossMaxHP / maxHp), 4);
+    ctx.fillStyle = "#aaa"; ctx.font = "bold 9px Nunito, sans-serif";
+    ctx.fillText("👾 " + arenaBoss, 14, 54);
     
     // Текст
     ctx.fillStyle = "#fff"; ctx.font = "bold 14px Nunito, sans-serif";
     let phaseText = arenaPhase === "attack" ? "⚡ ЖМИ КРУГИ! (" + arenaClicksHit + "/8)" : "🛡️ Уклоняйся!";
-    ctx.fillText(phaseText, 110, 66);
+    ctx.fillText(phaseText, 105, 76);
     
-    if (arenaPhase === "dodge") {
+    if (arenaPhase === "dodge" && !arenaPaused) {
         for (let i = attacks.length - 1; i >= 0; i--) {
             let a = attacks[i];
             if (a.glow !== undefined) a.glow += 0.1;
@@ -351,8 +406,8 @@ function renderArena() {
                 arenaHP -= 5;
                 arenaHitFlash = 10;
                 document.getElementById("arenaHP").innerText = Math.max(0, arenaHP);
-                for (let j = 0; j < 6; j++) {
-                    arenaParticles.push({ x: heart.x, y: heart.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 15, color: "#f00" });
+                for (let j = 0; j < 8; j++) {
+                    arenaParticles.push({ x: heart.x, y: heart.y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 20, color: "#f00", size: Math.random()*4+1 });
                 }
                 attacks.splice(i, 1);
                 if (arenaHP <= 0) { loseArena(); ctx.restore(); return; }
@@ -363,16 +418,30 @@ function renderArena() {
             
             let col = arenaAttackType === 0 ? "#ffffff" : "#4499ff";
             ctx.fillStyle = col;
-            ctx.shadowBlur = a.glow !== undefined ? 8 + Math.sin(a.glow)*4 : 8;
+            ctx.shadowBlur = 10 + Math.sin(a.glow || 0)*5;
             ctx.shadowColor = col;
+            // Градиент на квадрате
+            let sqGrad = ctx.createLinearGradient(a.x, a.y, a.x+a.size, a.y+a.size);
+            sqGrad.addColorStop(0, col);
+            sqGrad.addColorStop(1, arenaAttackType === 0 ? "#cccccc" : "#2266cc");
+            ctx.fillStyle = sqGrad;
             ctx.fillRect(a.x, a.y, a.size, a.size);
+            ctx.strokeStyle = "rgba(255,255,255,0.5)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(a.x, a.y, a.size, a.size);
             ctx.shadowBlur = 0;
         }
         
-        // Сердечко с пульсацией
+        // Сердечко
         let hx = heart.x, hy = heart.y, s = heart.size + Math.sin(Date.now()/200)*1.5;
+        // Свечение
+        ctx.fillStyle = "rgba(255,0,0,0.3)";
+        ctx.shadowBlur = 25; ctx.shadowColor = "#ff0000";
+        ctx.beginPath(); ctx.arc(hx, hy, s+5, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+        // Само сердечко
         ctx.fillStyle = "#ff0000";
-        ctx.shadowBlur = 15; ctx.shadowColor = "#ff0000";
+        ctx.shadowBlur = 12; ctx.shadowColor = "#ff0000";
         ctx.beginPath();
         ctx.moveTo(hx, hy + s*0.3);
         ctx.bezierCurveTo(hx, hy - s*0.3, hx - s, hy - s*0.3, hx - s, hy + s*0.3);
@@ -380,24 +449,26 @@ function renderArena() {
         ctx.bezierCurveTo(hx, hy + s, hx + s, hy + s*0.8, hx + s, hy + s*0.3);
         ctx.bezierCurveTo(hx + s, hy - s*0.3, hx, hy - s*0.3, hx, hy + s*0.3);
         ctx.fill();
-        ctx.strokeStyle = "#ff4444"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = "#ff6666"; ctx.lineWidth = 2; ctx.stroke();
         ctx.shadowBlur = 0;
     }
     
-    // Фаза атаки
-    if (arenaPhase === "attack") {
+    if (arenaPhase === "attack" && !arenaPaused) {
         arenaClickTargets.forEach(t => {
-            t.pulse = (t.pulse || 0) + 0.1;
-            let r = t.radius + Math.sin(t.pulse)*3;
+            t.pulse += 0.08;
+            let r = t.radius + Math.sin(t.pulse)*4;
             ctx.fillStyle = t.hit ? "rgba(0,255,0,0.6)" : "rgba(255,255,0,0.8)";
-            ctx.shadowBlur = t.hit ? 15 : 20;
+            ctx.shadowBlur = t.hit ? 18 : 25;
             ctx.shadowColor = t.hit ? "#0f0" : "#ff0";
             ctx.beginPath(); ctx.arc(t.x, t.y, r, 0, Math.PI*2); ctx.fill();
             ctx.strokeStyle = t.hit ? "#0f0" : "#ffaa00"; ctx.lineWidth = 3; ctx.stroke();
             ctx.shadowBlur = 0;
             if (!t.hit) {
-                ctx.fillStyle = "#000"; ctx.font = "bold 12px Nunito, sans-serif";
-                ctx.fillText("ЖМИ", t.x-15, t.y+5);
+                ctx.fillStyle = "#000"; ctx.font = "bold 13px Nunito, sans-serif";
+                ctx.fillText("ЖМИ", t.x-17, t.y+5);
+                // Стрелочка
+                ctx.fillStyle = "#fff";
+                ctx.beginPath(); ctx.moveTo(t.x, t.y-r-8); ctx.lineTo(t.x-5, t.y-r-3); ctx.lineTo(t.x+5, t.y-r-3); ctx.fill();
             }
         });
     }
@@ -407,10 +478,21 @@ function renderArena() {
         let p = arenaParticles[i];
         p.x += p.vx; p.y += p.vy; p.life--;
         if (p.life <= 0) { arenaParticles.splice(i, 1); continue; }
-        ctx.fillStyle = p.color; ctx.globalAlpha = p.life/30;
-        ctx.fillRect(p.x-2, p.y-2, 4, 4);
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life/35;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha = 1;
+    
+    // Пауза
+    if (arenaPaused) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, 400, 500);
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 36px Nunito, sans-serif";
+        ctx.fillText("⏸", 170, 250);
+        ctx.font = "bold 16px Nunito, sans-serif";
+        ctx.fillText("ПАУЗА", 155, 280);
+    }
     
     ctx.restore();
     requestAnimationFrame(renderArena);
