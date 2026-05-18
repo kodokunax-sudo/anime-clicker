@@ -113,7 +113,7 @@ function showModal(title, content) { let el = document.getElementById("modalCont
 function closeModal() { let el = document.getElementById("modalOverlay"); if (el) el.style.display = "none"; }
 function startFireEffectPassive(damage, durationMs) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } let elapsed = 0; fireInterval = setInterval(() => { if (!currentEnemy || currentEnemy.hp <= 0) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } return; } currentEnemy.hp -= damage; showFloatingText("🔥 -" + damage, "#ff6b6b"); renderEnemy(); elapsed += 2000; if (elapsed >= durationMs || currentEnemy.hp <= 0) { if (fireInterval) { clearInterval(fireInterval); fireInterval = null; } if (currentEnemy && currentEnemy.hp <= 0) victory(); } }, 2000); }
 
-// ========== ГЕНЕРАЦИЯ ВРАГА (С КНОПКОЙ АРЕНЫ) ==========
+// ========== ГЕНЕРАЦИЯ ВРАГА (ОБЯЗАТЕЛЬНАЯ АРЕНА ДЛЯ БОССОВ) ==========
 function generateEnemy() { 
     firstAttackThisFight = true; 
     let el = document.getElementById("spareBtn"); if (el) el.style.display = "none"; 
@@ -154,7 +154,7 @@ function generateEnemy() {
     applyStatusEffects(); 
     currentEnemy = { name, hp, maxHp:hp, damage:dmg, isBoss:isBoss||isUnique }; 
     
-    // Кнопка "Сразиться с боссом"
+    // Показать кнопку "Сразиться с боссом" для боссов начиная с 50 волны
     let btn = document.getElementById("startArenaBtn");
     if (btn) {
         if (currentEnemy && currentEnemy.isBoss && wave >= 50 && !gameCompleted) {
@@ -207,7 +207,12 @@ function checkEvolutionQuests() {
 
 function handleClick() { 
     initAudio(); 
+    // БЛОКИРУЕМ обычные удары если идёт арена
     if (typeof arenaActive !== 'undefined' && arenaActive) return;
+    // БЛОКИРУЕМ обычные удары если босс ждёт арены (есть кнопка)
+    let arenaBtn = document.getElementById("startArenaBtn");
+    if (arenaBtn && arenaBtn.style.display === "block") return;
+    
     if (playerHp <= 0) { resetGame(); return; } 
     if (!currentEnemy || currentEnemy.hp <= 0) return; 
     if (deathNoteTarget && wave === deathNoteTarget && !skipUsed) { currentEnemy.hp = 0; skipUsed = true; deathNoteTarget = null; victory(); return; } 
