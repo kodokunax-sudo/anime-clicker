@@ -161,8 +161,11 @@
                 <button class="sub-tab-btn" data-subtab="checkpoint">🚩 Чекпоинты</button>
             </div>
             <div id="fightSubTab" class="sub-tab-content active">
-                <div class="card"><div class="card-title">👾 Волна <span id="waveNumber">1</span></div>
-                    <div class="fatigue-bar"><div>😫 Усталость: <span id="fatiguePercent">0</span>%</div><div class="fatigue-progress" id="fatigueBar" style="width:0%"></div><button id="restBtn" class="btn" style="margin-top:10px;padding:8px 15px;width:100%;">💤 Отдых (<span id="restCost">30</span>⭐)</button></div>
+    <div class="card"><div class="card-title">👾 Волна <span id="waveNumber">1</span></div>
+        <!-- КНОПКА НАЧАТЬ БОЙ -->
+        <button id="startArenaBtn" class="btn btn-primary" style="width:100%;padding:15px;font-size:18px;margin-bottom:10px;background:linear-gradient(135deg,#e74c3c,#c0392b);display:none;" onclick="startArena(wave)">⚔️ СРАЗИТЬСЯ С БОССОМ!</button>
+        
+        <div class="fatigue-bar"><div>😫 Усталость: <span id="fatiguePercent">0</span>%</div>
                     <div id="statusEffects" style="min-height:20px;margin-bottom:10px;margin-top:5px;"></div>
                     <div id="enemyStatusEffects" style="min-height:20px;margin-bottom:5px;"></div>
                     <div id="bossDialogue" class="boss-dialogue" style="display:none;"></div>
